@@ -68,7 +68,7 @@ void iis3dwb_fifo(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #define BOOT_TIME         10
-#define FIFO_WATERMARK    256
+#define FIFO_WATERMARK    511
 
 int a = 0;
 //volatile uint8_t flag_tx = 0;
@@ -83,7 +83,7 @@ static uint8_t whoamI, rst;
 
 stmdev_ctx_t dev_ctx;
 iis3dwb_fifo_status_t fifo_status;
-static uint8_t tx_buffer[100];
+static uint8_t tx_buffer[1000];
 static iis3dwb_fifo_out_raw_t fifo_data[FIFO_WATERMARK];
 static int16_t *datax;
 static int16_t *datay;
@@ -503,7 +503,7 @@ void iis3dwb_fifo(void)
         iis3dwb_fifo_out_raw_t *f_data;
 
         /* print out first two and last two FIFO entries only */
-//        if (k > 1 && k < num - 2)
+//        if (k > 7 && k < num - 8)
 //          continue;
 
         f_data = &fifo_data[k];

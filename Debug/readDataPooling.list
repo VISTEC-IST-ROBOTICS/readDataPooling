@@ -21,29 +21,29 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   8 .data         000001dc  20000000  080073f4  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000860  200001dc  080075d0  000201dc  2**2
+  9 .bss          000012e0  200001dc  080075d0  000201dc  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  20000a3c  080075d0  00020a3c  2**0
+ 10 ._user_heap_stack 00000604  200014bc  080075d0  000214bc  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  000201dc  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0000e258  00000000  00000000  0002020c  2**0
+ 12 .debug_info   0000e25a  00000000  00000000  0002020c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00001b0c  00000000  00000000  0002e464  2**0
+ 13 .debug_abbrev 00001b15  00000000  00000000  0002e466  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00000c78  00000000  00000000  0002ff70  2**3
+ 14 .debug_aranges 00000c78  00000000  00000000  0002ff80  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00000bd0  00000000  00000000  00030be8  2**3
+ 15 .debug_ranges 00000bd0  00000000  00000000  00030bf8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00016cf0  00000000  00000000  000317b8  2**0
+ 16 .debug_macro  00016cf0  00000000  00000000  000317c8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000bd50  00000000  00000000  000484a8  2**0
+ 17 .debug_line   0000bd50  00000000  00000000  000484b8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0008b4ad  00000000  00000000  000541f8  2**0
+ 18 .debug_str    0008b4ad  00000000  00000000  00054208  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  000df6a5  2**0
+ 19 .comment      00000050  00000000  00000000  000df6b5  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00004594  00000000  00000000  000df6f8  2**2
+ 20 .debug_frame  00004594  00000000  00000000  000df708  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -2035,7 +2035,7 @@ void iis3dwb_fifo(void)
    * stored in FIFO) to FIFO_WATERMARK samples
    */
   iis3dwb_fifo_watermark_set(&dev_ctx, FIFO_WATERMARK);
- 800137c:	f44f 7180 	mov.w	r1, #256	; 0x100
+ 800137c:	f240 11ff 	movw	r1, #511	; 0x1ff
  8001380:	4864      	ldr	r0, [pc, #400]	; (8001514 <iis3dwb_fifo+0x1c8>)
  8001382:	f002 fdc8 	bl	8003f16 <iis3dwb_fifo_watermark_set>
   /* Set FIFO batch XL ODR to 12.5Hz */
@@ -2117,7 +2117,7 @@ void iis3dwb_fifo(void)
  8001402:	e075      	b.n	80014f0 <iis3dwb_fifo+0x1a4>
 
         /* print out first two and last two FIFO entries only */
-//        if (k > 1 && k < num - 2)
+//        if (k > 7 && k < num - 8)
 //          continue;
 
         f_data = &fifo_data[k];
@@ -2271,11 +2271,11 @@ void iis3dwb_fifo(void)
  800151c:	200002ac 	.word	0x200002ac
  8001520:	08006f70 	.word	0x08006f70
  8001524:	200002b0 	.word	0x200002b0
- 8001528:	20000314 	.word	0x20000314
- 800152c:	20000a14 	.word	0x20000a14
- 8001530:	20000a18 	.word	0x20000a18
- 8001534:	20000a1c 	.word	0x20000a1c
- 8001538:	20000a20 	.word	0x20000a20
+ 8001528:	20000698 	.word	0x20000698
+ 800152c:	20001494 	.word	0x20001494
+ 8001530:	20001498 	.word	0x20001498
+ 8001534:	2000149c 	.word	0x2000149c
+ 8001538:	200014a0 	.word	0x200014a0
  800153c:	08006f84 	.word	0x08006f84
  8001540:	08006fa8 	.word	0x08006fa8
  8001544:	08006fc0 	.word	0x08006fc0
@@ -3071,8 +3071,8 @@ void *_sbrk(ptrdiff_t incr)
  80018e2:	bd80      	pop	{r7, pc}
  80018e4:	20020000 	.word	0x20020000
  80018e8:	00000400 	.word	0x00000400
- 80018ec:	20000a24 	.word	0x20000a24
- 80018f0:	20000a40 	.word	0x20000a40
+ 80018ec:	200014a4 	.word	0x200014a4
+ 80018f0:	200014c0 	.word	0x200014c0
 
 080018f4 <SystemInit>:
   *         configuration.
@@ -3193,7 +3193,7 @@ LoopFillZerobss:
   ldr r2, =_sbss
  8001960:	200001dc 	.word	0x200001dc
   ldr r4, =_ebss
- 8001964:	20000a3c 	.word	0x20000a3c
+ 8001964:	200014bc 	.word	0x200014bc
 
 08001968 <ADC_IRQHandler>:
  * @retval None       
@@ -3356,7 +3356,7 @@ __weak void HAL_IncTick(void)
  8001a2c:	4770      	bx	lr
  8001a2e:	bf00      	nop
  8001a30:	20000008 	.word	0x20000008
- 8001a34:	20000a28 	.word	0x20000a28
+ 8001a34:	200014a8 	.word	0x200014a8
 
 08001a38 <HAL_GetTick>:
   * @note This function is declared as __weak to be overwritten in case of other 
@@ -3376,7 +3376,7 @@ __weak uint32_t HAL_GetTick(void)
  8001a44:	f85d 7b04 	ldr.w	r7, [sp], #4
  8001a48:	4770      	bx	lr
  8001a4a:	bf00      	nop
- 8001a4c:	20000a28 	.word	0x20000a28
+ 8001a4c:	200014a8 	.word	0x200014a8
 
 08001a50 <HAL_Delay>:
   *       implementations in user file.
@@ -12932,7 +12932,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8005f92:	e7ca      	b.n	8005f2a <_free_r+0x26>
  8005f94:	b003      	add	sp, #12
  8005f96:	bd30      	pop	{r4, r5, pc}
- 8005f98:	20000a2c 	.word	0x20000a2c
+ 8005f98:	200014ac 	.word	0x200014ac
 
 08005f9c <sbrk_aligned>:
  8005f9c:	b570      	push	{r4, r5, r6, lr}
@@ -12960,7 +12960,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8005fd0:	f04f 34ff 	mov.w	r4, #4294967295
  8005fd4:	4620      	mov	r0, r4
  8005fd6:	bd70      	pop	{r4, r5, r6, pc}
- 8005fd8:	20000a30 	.word	0x20000a30
+ 8005fd8:	200014b0 	.word	0x200014b0
 
 08005fdc <_malloc_r>:
  8005fdc:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
@@ -13064,7 +13064,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  80060ba:	6025      	str	r5, [r4, #0]
  80060bc:	e7de      	b.n	800607c <_malloc_r+0xa0>
  80060be:	bf00      	nop
- 80060c0:	20000a2c 	.word	0x20000a2c
+ 80060c0:	200014ac 	.word	0x200014ac
 
 080060c4 <__ssputs_r>:
  80060c4:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -13365,7 +13365,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006392:	b103      	cbz	r3, 8006396 <_sbrk_r+0x1a>
  8006394:	6023      	str	r3, [r4, #0]
  8006396:	bd38      	pop	{r3, r4, r5, pc}
- 8006398:	20000a34 	.word	0x20000a34
+ 8006398:	200014b4 	.word	0x200014b4
 
 0800639c <__assert_func>:
  800639c:	b51f      	push	{r0, r1, r2, r3, r4, lr}
@@ -13454,13 +13454,13 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006454:	4801      	ldr	r0, [pc, #4]	; (800645c <__malloc_lock+0x8>)
  8006456:	f000 bc1f 	b.w	8006c98 <__retarget_lock_acquire_recursive>
  800645a:	bf00      	nop
- 800645c:	20000a38 	.word	0x20000a38
+ 800645c:	200014b8 	.word	0x200014b8
 
 08006460 <__malloc_unlock>:
  8006460:	4801      	ldr	r0, [pc, #4]	; (8006468 <__malloc_unlock+0x8>)
  8006462:	f000 bc1a 	b.w	8006c9a <__retarget_lock_release_recursive>
  8006466:	bf00      	nop
- 8006468:	20000a38 	.word	0x20000a38
+ 8006468:	200014b8 	.word	0x200014b8
 
 0800646c <_realloc_r>:
  800646c:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
@@ -14221,25 +14221,25 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006b2c:	4801      	ldr	r0, [pc, #4]	; (8006b34 <__sfp_lock_acquire+0x8>)
  8006b2e:	f000 b8b3 	b.w	8006c98 <__retarget_lock_acquire_recursive>
  8006b32:	bf00      	nop
- 8006b34:	20000a39 	.word	0x20000a39
+ 8006b34:	200014b9 	.word	0x200014b9
 
 08006b38 <__sfp_lock_release>:
  8006b38:	4801      	ldr	r0, [pc, #4]	; (8006b40 <__sfp_lock_release+0x8>)
  8006b3a:	f000 b8ae 	b.w	8006c9a <__retarget_lock_release_recursive>
  8006b3e:	bf00      	nop
- 8006b40:	20000a39 	.word	0x20000a39
+ 8006b40:	200014b9 	.word	0x200014b9
 
 08006b44 <__sinit_lock_acquire>:
  8006b44:	4801      	ldr	r0, [pc, #4]	; (8006b4c <__sinit_lock_acquire+0x8>)
  8006b46:	f000 b8a7 	b.w	8006c98 <__retarget_lock_acquire_recursive>
  8006b4a:	bf00      	nop
- 8006b4c:	20000a3a 	.word	0x20000a3a
+ 8006b4c:	200014ba 	.word	0x200014ba
 
 08006b50 <__sinit_lock_release>:
  8006b50:	4801      	ldr	r0, [pc, #4]	; (8006b58 <__sinit_lock_release+0x8>)
  8006b52:	f000 b8a2 	b.w	8006c9a <__retarget_lock_release_recursive>
  8006b56:	bf00      	nop
- 8006b58:	20000a3a 	.word	0x20000a3a
+ 8006b58:	200014ba 	.word	0x200014ba
 
 08006b5c <__sinit>:
  8006b5c:	b510      	push	{r4, lr}
@@ -14535,7 +14535,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006df2:	6023      	str	r3, [r4, #0]
  8006df4:	bd38      	pop	{r3, r4, r5, pc}
  8006df6:	bf00      	nop
- 8006df8:	20000a34 	.word	0x20000a34
+ 8006df8:	200014b4 	.word	0x200014b4
 
 08006dfc <_getpid_r>:
  8006dfc:	f7fa bcb4 	b.w	8001768 <_getpid>
@@ -14616,7 +14616,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006ea2:	b103      	cbz	r3, 8006ea6 <_write_r+0x1e>
  8006ea4:	6023      	str	r3, [r4, #0]
  8006ea6:	bd38      	pop	{r3, r4, r5, pc}
- 8006ea8:	20000a34 	.word	0x20000a34
+ 8006ea8:	200014b4 	.word	0x200014b4
 
 08006eac <_close_r>:
  8006eac:	b538      	push	{r3, r4, r5, lr}
@@ -14632,7 +14632,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006ec2:	b103      	cbz	r3, 8006ec6 <_close_r+0x1a>
  8006ec4:	6023      	str	r3, [r4, #0]
  8006ec6:	bd38      	pop	{r3, r4, r5, pc}
- 8006ec8:	20000a34 	.word	0x20000a34
+ 8006ec8:	200014b4 	.word	0x200014b4
 
 08006ecc <_fstat_r>:
  8006ecc:	b538      	push	{r3, r4, r5, lr}
@@ -14650,7 +14650,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006ee6:	6023      	str	r3, [r4, #0]
  8006ee8:	bd38      	pop	{r3, r4, r5, pc}
  8006eea:	bf00      	nop
- 8006eec:	20000a34 	.word	0x20000a34
+ 8006eec:	200014b4 	.word	0x200014b4
 
 08006ef0 <_isatty_r>:
  8006ef0:	b538      	push	{r3, r4, r5, lr}
@@ -14666,7 +14666,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006f06:	b103      	cbz	r3, 8006f0a <_isatty_r+0x1a>
  8006f08:	6023      	str	r3, [r4, #0]
  8006f0a:	bd38      	pop	{r3, r4, r5, pc}
- 8006f0c:	20000a34 	.word	0x20000a34
+ 8006f0c:	200014b4 	.word	0x200014b4
 
 08006f10 <_lseek_r>:
  8006f10:	b538      	push	{r3, r4, r5, lr}
@@ -14684,7 +14684,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006f2a:	b103      	cbz	r3, 8006f2e <_lseek_r+0x1e>
  8006f2c:	6023      	str	r3, [r4, #0]
  8006f2e:	bd38      	pop	{r3, r4, r5, pc}
- 8006f30:	20000a34 	.word	0x20000a34
+ 8006f30:	200014b4 	.word	0x200014b4
 
 08006f34 <_read_r>:
  8006f34:	b538      	push	{r3, r4, r5, lr}
@@ -14702,7 +14702,7 @@ int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
  8006f4e:	b103      	cbz	r3, 8006f52 <_read_r+0x1e>
  8006f50:	6023      	str	r3, [r4, #0]
  8006f52:	bd38      	pop	{r3, r4, r5, pc}
- 8006f54:	20000a34 	.word	0x20000a34
+ 8006f54:	200014b4 	.word	0x200014b4
 
 08006f58 <_init>:
  8006f58:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
