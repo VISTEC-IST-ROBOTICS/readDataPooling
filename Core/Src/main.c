@@ -482,7 +482,7 @@ void iis3dwb_fifo(void)
 
   /* Set Output Data Rate */
   iis3dwb_xl_data_rate_set(&dev_ctx, IIS3DWB_XL_ODR_26k7Hz);
-  iis3dwb_fifo_timestamp_batch_set(&dev_ctx, IIS3DWB_DEC_1);
+  iis3dwb_fifo_timestamp_batch_set(&dev_ctx, IIS3DWB_DEC_8);
   iis3dwb_timestamp_set(&dev_ctx, PROPERTY_ENABLE);
 
   /* Wait samples */
@@ -503,8 +503,8 @@ void iis3dwb_fifo(void)
         iis3dwb_fifo_out_raw_t *f_data;
 
         /* print out first two and last two FIFO entries only */
-        if (k > 1 && k < num - 2)
-          continue;
+//        if (k > 1 && k < num - 2)
+//          continue;
 
         f_data = &fifo_data[k];
 
@@ -515,7 +515,7 @@ void iis3dwb_fifo(void)
         ts = (int32_t *)&f_data->data[0];
 
         switch (f_data->tag >> 3) {
-        case IIS3DWB_XL_TAG:
+        case IIS3DWB_XL_TAG: //2
           sprintf((char *)tx_buffer, "%d: ACC [mg]:\t%4.2f\t%4.2f\t%4.2f\r\n",
                   k,
                   iis3dwb_from_fs8g_to_mg(*datax),
@@ -523,11 +523,13 @@ void iis3dwb_fifo(void)
                   iis3dwb_from_fs8g_to_mg(*dataz));
           tx_com(tx_buffer, strlen((char const *)tx_buffer));
           break;
-        case IIS3DWB_TIMESTAMP_TAG:
+        case IIS3DWB_TIMESTAMP_TAG: //4
           sprintf((char *)tx_buffer, "%d TIMESTAMP [ms] %d\r\n", (uint16_t)k, (uint16_t)*ts);
           tx_com(tx_buffer, strlen((char const *)tx_buffer));
           break;
         default:
+//		sprintf((char *)tx_buffer, "Tag %x\r\n", f_data->tag >> 3);
+//		tx_com(tx_buffer, strlen((char const *)tx_buffer));
           break;
         }
       }
