@@ -1,0 +1,12 @@
+../Core/Src/main.c:90:5:main	8	static
+../Core/Src/main.c:163:6:SystemClock_Config	88	static
+../Core/Src/main.c:210:13:MX_SPI2_Init	8	static
+../Core/Src/main.c:248:13:MX_USART2_UART_Init	8	static
+../Core/Src/main.c:281:13:MX_GPIO_Init	48	static
+../Core/Src/main.c:335:6:HAL_GPIO_EXTI_Callback	16	static
+../Core/Src/main.c:352:16:platform_write	24	static
+../Core/Src/main.c:373:16:platform_read	24	static
+../Core/Src/main.c:407:13:platform_delay	16	static
+../Core/Src/main.c:418:13:tx_com	16	static
+../Core/Src/main.c:425:6:iis3dwb_read_data_polling	48	static
+../Core/Src/main.c:522:6:Error_Handler	4	static,ignoring_inline_asm

@@ -1,0 +1,12 @@
+main.c:90:5:main	2
+main.c:163:6:SystemClock_Config	3
+main.c:210:13:MX_SPI2_Init	2
+main.c:248:13:MX_USART2_UART_Init	2
+main.c:281:13:MX_GPIO_Init	1
+main.c:335:6:HAL_GPIO_EXTI_Callback	1
+main.c:352:16:platform_write	2
+main.c:373:16:platform_read	2
+main.c:407:13:platform_delay	1
+main.c:418:13:tx_com	1
+main.c:425:6:iis3dwb_read_data_polling	3
+main.c:522:6:Error_Handler	1
