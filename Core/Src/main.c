@@ -82,8 +82,13 @@ static float acceleration_mg[3];
 static float temperature_degC;
 static uint8_t whoamI, rst;
 
-static uint8_t scale_CTRL1 = 0xAA;
-static uint8_t scale_return = 0x11;
+static uint8_t scale_CTRL1 = 0xAA; // Accelerometer full-scale selection +- 4G
+static uint8_t scale_return_CTRL1 = 0x11;
+
+
+//static uint8_t scale_CTRL3 = 0xAA; // Accelerometer full-scale selection +- 4G
+static uint8_t scale_return_CTRL3 = 0x11;
+
 
 iis3dwb_ctrl1_xl_t ctrl1_xl;
 //static uint8_t keep_return = 0x30;
@@ -156,8 +161,12 @@ int main(void)
 //   iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_2g);
    iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_CTRL1, 1);
    HAL_Delay(10);
-   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return, 1);
+   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return_CTRL1, 1);
    HAL_Delay(10);
+
+   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+   HAL_Delay(10);
+
 //   HAL_Delay(200);
 
   /* USER CODE END 2 */
@@ -181,9 +190,9 @@ int main(void)
 //	  keep_return = iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_4g);
 
 //	  iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
-	  memset(&data_raw_temperature, 0x00, sizeof(int16_t));
-	  iis3dwb_temperature_raw_get(&dev_ctx, &data_raw_temperature);
-	  temperature_degC = iis3dwb_from_lsb_to_celsius(data_raw_temperature);
+//	  memset(&data_raw_temperature, 0x00, sizeof(int16_t));
+//	  iis3dwb_temperature_raw_get(&dev_ctx, &data_raw_temperature);
+//	  temperature_degC = iis3dwb_from_lsb_to_celsius(data_raw_temperature);
 
 //      sprintf((char *)tx_buffer,
 //              "TEMP [degC]:%6.2f\r\n", temperature_degC);
@@ -191,14 +200,14 @@ int main(void)
 //	  memcpy((char *)tx_buffer, "TEMP [degC]:%6.2f\r\n", temperature_degC);
 //	  HAL_UART_Transmit(&huart2, tx_buffer, sizeof(tx_buffer), 1000);
 
-//      memset(data_raw_acceleration, 0x00, 3 * sizeof(int16_t));
-//      iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
-//      acceleration_mg[0] =
-//        iis3dwb_from_fs2g_to_mg(data_raw_acceleration[0]);
-//      acceleration_mg[1] =
-//        iis3dwb_from_fs2g_to_mg(data_raw_acceleration[1]);
-//      acceleration_mg[2] =
-//        iis3dwb_from_fs2g_to_mg(data_raw_acceleration[2]);
+      memset(data_raw_acceleration, 0x00, 3 * sizeof(int16_t));
+      iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
+      acceleration_mg[0] =
+        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[0]);
+      acceleration_mg[1] =
+        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[1]);
+      acceleration_mg[2] =
+        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[2]);
 
 
 
