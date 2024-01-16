@@ -90,6 +90,13 @@ static int16_t *datay;
 static int16_t *dataz;
 static int32_t *ts;
 
+uint8_t tx_buf_rmt[ 2 ] = {0x00, 0x00};
+uint8_t rx_buf_rmt[ 2 ] = {0x00, 0x00};
+
+uint8_t Rxflag = 0;
+uint8_t Txflag = 0;
+
+uint8_t tx_set_cs = 0;
 /* USER CODE END 0 */
 
 /**
@@ -137,16 +144,9 @@ int main(void)
   iis3dwb_device_id_get(&dev_ctx, &whoamI);
 
    while (whoamI != IIS3DWB_ID)
-//	   while (1)
 	    {
 	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
-//	  sprintf((char *)MSG, "%d\r\n", whoamI);
-//	  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, SET);
-//	  HAL_Delay(500);
-//	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, RESET);
-//	  HAL_Delay(500);
-	  a += 1;
+
 	  HAL_Delay(50);
   }
 
@@ -157,7 +157,7 @@ int main(void)
   while (1)
   {
 //	  iis3dwb_read_data_polling();
-	  iis3dwb_fifo();
+	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
 	  HAL_Delay(50);
     /* USER CODE END WHILE */
 
@@ -235,7 +235,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -304,7 +304,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, SSC_Pin|GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -319,22 +322,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : CS_Pin */
-  GPIO_InitStruct.Pin = CS_Pin;
+  /*Configure GPIO pins : SSC_Pin PB12 */
+  GPIO_InitStruct.Pin = SSC_Pin|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : INT1_Pin */
-  GPIO_InitStruct.Pin = INT1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pin : INT_Pin */
+  GPIO_InitStruct.Pin = INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(INT1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  /*Configure GPIO pin : SPI2_CS_Pin */
+  GPIO_InitStruct.Pin = SPI2_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -344,10 +350,10 @@ static void MX_GPIO_Init(void)
 // EXTI Line8 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(GPIO_Pin == INT1_Pin)// If The INT Source Is EXTI Line8 (PC8 Pin)
-	{
-//		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin); // Toggle The Output (LED) Pin
-	}
+//	if(GPIO_Pin == INT1_Pin)// If The INT Source Is EXTI Line8 (PC8 Pin)
+//	{
+////		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin); // Toggle The Output (LED) Pin
+//	}
 }
 /*
  * @brief  Write generic device register (platform dependent)
@@ -361,14 +367,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  */
 static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
-	if (handle == &hspi2) {
-	 a = a-1;
-	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, RESET);
-	  HAL_SPI_Transmit(handle, &reg, 1, 1000);
-	  HAL_SPI_Transmit(handle, (uint8_t*) bufp, len, 1000);
-	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, SET);
-	}
+
+	  tx_buf_rmt[ 0 ] = reg | 0x00;
+	  tx_buf_rmt[ 1 ] = *bufp;
+	  tx_set_cs = 1;
+
+	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
+	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
+	  HAL_SPI_Transmit_IT(handle, (uint8_t*) bufp, len);
 	  return 0;
+
 }
 /*
  * @brief  Read generic device register (platform dependent)
@@ -382,31 +390,26 @@ static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, ui
  */
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
-	if (handle == &hspi2) {
 
-	  reg |= 0x80;
-//	  a = a+1;
-	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, RESET);
-	  HAL_SPI_Transmit(handle, &reg, 1, 1000);
-	  HAL_SPI_Receive(handle, bufp, len, 1000);
-	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, SET);
+//    uint8_t tx_buf_rmt[ 2 ] = {0x00, 0x00};
+//    uint8_t rx_buf_rmt[ 1 ] = {0x00};
 
-//	  HAL_SPI_TransmitReceive(handle, &reg, bufp, len, 200);
+    tx_buf_rmt[ 0 ] = reg;
+    tx_buf_rmt[ 0 ] |= 0x80;
 
-//  	  HAL_SPI_Transmit_IT(handle, &reg, 1);
-//  	  if(flag_tx){
-//  		HAL_SPI_Receive_IT(handle, bufp, 10);
-//  		flag_tx = 0;
-//  	  }
-//
-//  	  if(flag_rx){
-//  		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-//  		flag_rx = 0;
-//  	  }
-	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-//	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-	}
-	  return 0;
+    tx_buf_rmt[ 1 ] = 0x00;
+
+    Txflag = 2;
+    Rxflag = 2;
+
+    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
+    HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
+    HAL_SPI_Receive_IT(handle, rx_buf_rmt, len);
+
+	HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+
+	return 0;
+
 }
 /*
  * @brief  platform specific delay (platform dependent)
@@ -621,15 +624,29 @@ void iis3dwb_read_data_polling(void)
     }
   }
 }
-//void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-//{
-//    flag_tx = 1;
-//}
-//
-//void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-//{
-//	flag_rx = 1;
-//}
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
+	if(hspi->Instance == hspi2.Instance)
+		 {
+			Txflag = 0;
+			if(tx_set_cs){
+				HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
+				tx_set_cs = 0;
+			}
+		 }
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
+	if(hspi->Instance == hspi2.Instance)
+	 {
+		Rxflag = 0;
+		HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
+
+	 }
+}
 
 /* USER CODE END 4 */
 
