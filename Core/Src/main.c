@@ -81,6 +81,10 @@ static float acceleration_mg[3];
 static float temperature_degC;
 static uint8_t whoamI, rst;
 
+static uint8_t scale_return = 0x00;
+static uint8_t scale_send = 0x04;
+
+
 stmdev_ctx_t dev_ctx;
 iis3dwb_fifo_status_t fifo_status;
 static uint8_t tx_buffer[1000];
@@ -157,7 +161,11 @@ int main(void)
   {
 //	  iis3dwb_read_data_polling();
 //	  iis3dwb_fifo();
-	  HAL_Delay(50);
+//	  iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_4g);
+	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return, 1);
+	  HAL_Delay(500);
+	  iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_send, 1);
+	  HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -353,12 +361,13 @@ static void MX_GPIO_Init(void)
 static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
 	  tx_buf_rmt[ 0 ] = reg;
-	  tx_buf_rmt[ 1 ] = bufp;
+	  tx_buf_rmt[ 1 ] = *bufp;
+	  tx_set_cs = 1;
 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, RESET);
-	  HAL_SPI_Transmit_IT(handle, &reg, 2);
-//	}
-//	  return 0;
+	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
+
+	  return 0;
 }
 /*
  * @brief  Read generic device register (platform dependent)
@@ -382,7 +391,6 @@ static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
 	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
 	  HAL_SPI_Receive_IT(handle, rx_buf_rmt, len);
-
 
 	  *bufp = rx_buf_rmt[0];
 
