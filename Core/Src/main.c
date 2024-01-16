@@ -60,8 +60,9 @@ static void MX_SPI2_Init(void);
 static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len);
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
 static void platform_delay(uint32_t ms);
+static void tx_com(uint8_t *tx_buffer, uint16_t len);
 void iis3dwb_read_data_polling(void);
-void iis3dwb_fifo(void);
+//void iis3dwb_fifo(void);
 //stmdev_ctx_t dev_ctx;
 /* USER CODE END PFP */
 
@@ -81,9 +82,11 @@ static float acceleration_mg[3];
 static float temperature_degC;
 static uint8_t whoamI, rst;
 
-static uint8_t scale_return = 0x00;
-static uint8_t scale_send = 0x04;
+//static uint8_t scale_return = 0x11;
+//static uint8_t scale_send = 0x04;
 
+iis3dwb_ctrl1_xl_t ctrl1_xl;
+//static uint8_t keep_return = 0x30;
 
 stmdev_ctx_t dev_ctx;
 iis3dwb_fifo_status_t fifo_status;
@@ -144,9 +147,7 @@ int main(void)
 
   /* Check device ID */
   iis3dwb_device_id_get(&dev_ctx, &whoamI);
-
    while (whoamI != IIS3DWB_ID)
-//	   while (1)
 	    {
 	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
 	  a += 1;
@@ -159,13 +160,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
 //	  iis3dwb_read_data_polling();
 //	  iis3dwb_fifo();
-//	  iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_4g);
-	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return, 1);
+//	  iis3dwb_xl_full_scale_set(&dev_ctx, &scale_send);
+//	  HAL_Delay(500);
+	  ////Example of reading data from reg.
+//	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return, 1);
+//	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
+//	  iis3dwb_xl_full_scale_get(&dev_ctx, &scale_return);
+//	  HAL_Delay(500);
+	  ////Example of writing data from reg.
+//	  iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_send, 1);
+//	  keep_return = iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_4g);
+
+//	  iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
+	  iis3dwb_temperature_raw_get(&dev_ctx, &data_raw_temperature);
+	  temperature_degC = iis3dwb_from_lsb_to_celsius(data_raw_temperature);
+
+//      sprintf((char *)tx_buffer,
+//              "TEMP [degC]:%6.2f\r\n", temperature_degC);
+
+	  memcpy((char *)tx_buffer, "TEMP [degC]:%6.2f\r\n", temperature_degC);
+	  HAL_UART_Transmit(&huart2, tx_buffer, sizeof(tx_buffer), 1000);
+
+
+//      tx_com(tx_buffer, strlen((char const *)tx_buffer));
+
 	  HAL_Delay(500);
-	  iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_send, 1);
-	  HAL_Delay(500);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -365,7 +388,7 @@ static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, ui
 	  tx_set_cs = 1;
 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, RESET);
-	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
+	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, len+1);
 
 	  return 0;
 }
@@ -381,22 +404,15 @@ static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, ui
  */
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
-//	if (handle == &hspi2) {
-
-//	  reg |= 0x80;
 	  tx_buf_rmt[ 0 ] = reg;
 	  tx_buf_rmt[ 0 ] |= 0x80;
 	  tx_buf_rmt[ 1 ] = 0x00;
 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
 	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
-	  HAL_SPI_Receive_IT(handle, rx_buf_rmt, len);
-
-	  *bufp = rx_buf_rmt[0];
+	  HAL_SPI_Receive_IT(handle, bufp, len);
 
 	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-//	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-//	}
 	  return 0;
 }
 /*
@@ -458,7 +474,7 @@ void iis3dwb_fifo(void)
   /* Enable Block Data Update */
   iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
   /* Set full scale */
-  iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_8g);
+//  iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_8g);
 
   /*
    * Set FIFO watermark (number of unread sensor data TAG + 6 bytes
@@ -624,11 +640,9 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 		 }
 }
 
-//void SPI_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 
-//	if(hdma->Instance == hdma_spi2_rx.Instance)
 	if(hspi->Instance == hspi2.Instance)
 	 {
 		HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
