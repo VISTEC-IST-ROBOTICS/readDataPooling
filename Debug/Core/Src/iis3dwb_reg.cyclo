@@ -106,4 +106,3 @@
 ../Core/Src/iis3dwb_reg.c:2955:9:iis3dwb_batch_counter_threshold_set	3
 ../Core/Src/iis3dwb_reg.c:2990:9:iis3dwb_batch_counter_threshold_get	3
 ../Core/Src/iis3dwb_reg.c:3021:9:iis3dwb_fifo_data_level_get	2
-../Core/Src/iis3dwb_reg.c:3049:9:iis3dwb_fifo_status_get	1

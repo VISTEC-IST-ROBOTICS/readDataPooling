@@ -1136,8 +1136,8 @@ typedef struct
   uint8_t fifo_ovr : 1;
   uint8_t fifo_th : 1;
 } iis3dwb_fifo_status_t;
-int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
-                                iis3dwb_fifo_status_t *val);
+//int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
+//                                iis3dwb_fifo_status_t *val);
 
 typedef struct
 {
