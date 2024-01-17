@@ -62,6 +62,8 @@ static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t 
 static void platform_delay(uint32_t ms);
 static void tx_com(uint8_t *tx_buffer, uint16_t len);
 void iis3dwb_read_data_polling(void);
+
+//int32_t iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, uint8_t val);
 //void iis3dwb_fifo(void);
 //stmdev_ctx_t dev_ctx;
 /* USER CODE END PFP */
@@ -82,11 +84,11 @@ static float acceleration_mg[3];
 static float temperature_degC;
 static uint8_t whoamI, rst;
 
-static uint8_t scale_CTRL1 = 0xAA; // Accelerometer full-scale selection +- 4G
+static uint8_t scale_CTRL1 = 0xA8; // Accelerometer full-scale selection +- 4G
 static uint8_t scale_return_CTRL1 = 0x11;
 
 
-//static uint8_t scale_CTRL3 = 0xAA; // Accelerometer full-scale selection +- 4G
+uint8_t scale_CTRL3 = 0x01; // Accelerometer full-scale selection +- 4G
 static uint8_t scale_return_CTRL3 = 0x11;
 
 
@@ -106,6 +108,7 @@ uint8_t tx_set_cs = 0;
 
 uint8_t tx_buf_rmt[ 2 ] = {0x00, 0x00};
 uint8_t rx_buf_rmt[ 2 ] = {0x0, 0x00};
+iis3dwb_ctrl3_c_t ctrl3_c;
 
 /* USER CODE END 0 */
 
@@ -122,7 +125,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -164,9 +167,23 @@ int main(void)
    iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return_CTRL1, 1);
    HAL_Delay(10);
 
-   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
-   HAL_Delay(10);
+//   iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_CTRL3, 1);
+//   HAL_Delay(10);
+//   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+//   HAL_Delay(10);
 
+//   iis3dwb_reset_set(&SENSOR_BUS, PROPERTY_ENABLE);
+
+//   do {
+//     iis3dwb_reset_get(&dev_ctx, &rst); //ctrl3_c.sw_reset = (uint8_t)val;
+//   } while (rst);
+//
+//   /* Enable Block Data Update */
+   iis3dwb_block_data_update_set(&dev_ctx, ctrl3_c, PROPERTY_ENABLE); //ctrl3_c.bdu = (uint8_t)val;
+//   iis3dwb_block_data_update_set(&dev_ctx, scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
+//
+//   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+//   HAL_Delay(10);
 //   HAL_Delay(200);
 
   /* USER CODE END 2 */
@@ -175,45 +192,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
-//	  iis3dwb_read_data_polling();
-//	  iis3dwb_fifo();
-//	  iis3dwb_xl_full_scale_set(&dev_ctx, &scale_send);
-//	  HAL_Delay(500);
-	  ////Example of reading data from reg.
-//	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return, 1);
-//	  iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
-//	  iis3dwb_xl_full_scale_get(&dev_ctx, &scale_return);
-//	  HAL_Delay(500);
-	  ////Example of writing data from reg.
-//	  iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_send, 1);
-//	  keep_return = iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_4g);
-
-//	  iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
-//	  memset(&data_raw_temperature, 0x00, sizeof(int16_t));
-//	  iis3dwb_temperature_raw_get(&dev_ctx, &data_raw_temperature);
-//	  temperature_degC = iis3dwb_from_lsb_to_celsius(data_raw_temperature);
-
-//      sprintf((char *)tx_buffer,
-//              "TEMP [degC]:%6.2f\r\n", temperature_degC);
-
-//	  memcpy((char *)tx_buffer, "TEMP [degC]:%6.2f\r\n", temperature_degC);
-//	  HAL_UART_Transmit(&huart2, tx_buffer, sizeof(tx_buffer), 1000);
-
-      memset(data_raw_acceleration, 0x00, 3 * sizeof(int16_t));
-      iis3dwb_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
-      acceleration_mg[0] =
-        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[0]);
-      acceleration_mg[1] =
-        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[1]);
-      acceleration_mg[2] =
-        iis3dwb_from_fs4g_to_mg(data_raw_acceleration[2]);
-
-
-
-//      tx_com(tx_buffer, strlen((char const *)tx_buffer));
-
-	  HAL_Delay(500);
+	   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+	   HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
@@ -498,7 +478,7 @@ void iis3dwb_fifo(void)
   } while (rst);
 
   /* Enable Block Data Update */
-  iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
+//  iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
   /* Set full scale */
 //  iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_8g);
 
@@ -596,7 +576,7 @@ void iis3dwb_read_data_polling(void)
   } while (rst);
 
   /* Enable Block Data Update */
-  iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
+//  iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
   /* Set Output Data Rate */
   iis3dwb_xl_data_rate_set(&dev_ctx, IIS3DWB_XL_ODR_26k7Hz);
   /* Set full scale */
@@ -675,6 +655,24 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 //		Rxflag = 1;
 	 }
 }
+
+//int32_t iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, uint8_t val)
+//{
+//
+////
+////  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
+////
+////  if (ret == 0)
+////  {
+//    ctrl3_c.bdu = (uint8_t) val;
+//    iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
+////  }
+////
+////  return ret;
+////	uint8_t keep_val = 0x44;
+////	iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, &keep_val, 1);
+//	return 0;
+//}
 /* USER CODE END 4 */
 
 /**
