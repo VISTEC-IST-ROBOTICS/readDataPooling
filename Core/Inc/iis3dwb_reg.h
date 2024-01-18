@@ -848,8 +848,8 @@ int32_t iis3dwb_xl_usr_offset_get(stmdev_ctx_t *ctx, uint8_t *val);
 
 int32_t iis3dwb_timestamp_rst(stmdev_ctx_t *ctx);
 
-int32_t iis3dwb_timestamp_set(stmdev_ctx_t *ctx, uint8_t val);
-int32_t iis3dwb_timestamp_get(stmdev_ctx_t *ctx, uint8_t *val);
+void iis3dwb_timestamp_set(stmdev_ctx_t *ctx, iis3dwb_ctrl10_c_t *ctrl10_c);
+void iis3dwb_timestamp_get(stmdev_ctx_t *ctx, iis3dwb_ctrl10_c_t ctrl10_c, uint8_t *val);
 
 int32_t iis3dwb_timestamp_raw_get(stmdev_ctx_t *ctx, uint32_t *val);
 
@@ -1130,16 +1130,18 @@ typedef struct
   uint8_t fifo_ovr : 1;
   uint8_t fifo_th : 1;
 } iis3dwb_fifo_status_t;
-int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
-                                iis3dwb_fifo_status_t *val);
+//void iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status2_t *status, iis3dwb_fifo_status_t *val);
+void iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status_t *val, uint8_t *buff);
+void iis3dwb_fifo_status_interpret(iis3dwb_fifo_status2_t *status, iis3dwb_fifo_status_t *val);
+
 
 typedef struct
 {
   uint8_t tag;
   uint8_t data[6];
 } iis3dwb_fifo_out_raw_t;
-int32_t iis3dwb_fifo_out_raw_get(stmdev_ctx_t *ctx, iis3dwb_fifo_out_raw_t *val);
-int32_t iis3dwb_fifo_out_multi_raw_get(stmdev_ctx_t *ctx,
+void iis3dwb_fifo_out_raw_get(stmdev_ctx_t *ctx, iis3dwb_fifo_out_raw_t *val);
+void iis3dwb_fifo_out_multi_raw_get(stmdev_ctx_t *ctx,
                                        iis3dwb_fifo_out_raw_t *fdata,
                                        uint16_t num);
 

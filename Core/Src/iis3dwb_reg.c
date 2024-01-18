@@ -83,13 +83,6 @@ int32_t __weak iis3dwb_write_reg(stmdev_ctx_t *ctx, uint8_t reg,
   *
   */
 
-static void bytecpy(uint8_t *target, const uint8_t *source)
-{
-  if ((target != NULL) && (source != NULL))
-  {
-    *target = *source;
-  }
-}
 
 /**
   * @}
@@ -673,20 +666,9 @@ int32_t iis3dwb_timestamp_rst(stmdev_ctx_t *ctx)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_timestamp_set(stmdev_ctx_t *ctx, uint8_t val)
+void iis3dwb_timestamp_set(stmdev_ctx_t *ctx, iis3dwb_ctrl10_c_t *ctrl10_c)
 {
-  iis3dwb_ctrl10_c_t ctrl10_c;
-
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL10_C, (uint8_t *)&ctrl10_c, 1);
-
-  if (ret == 0)
-  {
-    ctrl10_c.timestamp_en = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_CTRL10_C,
-                            (uint8_t *)&ctrl10_c, 1);
-  }
-
-  return ret;
+    transmitSPIManual(ctx, IIS3DWB_CTRL10_C, ctrl10_c, 1);
 }
 
 /**
@@ -697,14 +679,12 @@ int32_t iis3dwb_timestamp_set(stmdev_ctx_t *ctx, uint8_t val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_timestamp_get(stmdev_ctx_t *ctx, uint8_t *val)
+void iis3dwb_timestamp_get(stmdev_ctx_t *ctx, iis3dwb_ctrl10_c_t ctrl10_c, uint8_t *val)
 {
-  iis3dwb_ctrl10_c_t ctrl10_c;
 
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL10_C, (uint8_t *)&ctrl10_c, 1);
+  receiveSPIManual(ctx, IIS3DWB_CTRL10_C, &ctrl10_c, 1);
   *val = ctrl10_c.timestamp_en;
 
-  return ret;
 }
 
 /**
@@ -852,11 +832,10 @@ int32_t iis3dwb_acceleration_raw_get(stmdev_ctx_t *ctx, int16_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_out_raw_get(stmdev_ctx_t *ctx, iis3dwb_fifo_out_raw_t *val)
+void iis3dwb_fifo_out_raw_get(stmdev_ctx_t *ctx, iis3dwb_fifo_out_raw_t *val)
 {
-  const int32_t ret = iis3dwb_fifo_out_multi_raw_get(ctx, val, 1);
+  iis3dwb_fifo_out_multi_raw_get(ctx, val, 1);
 
-  return ret;
 }
 
 /**
@@ -868,16 +847,13 @@ int32_t iis3dwb_fifo_out_raw_get(stmdev_ctx_t *ctx, iis3dwb_fifo_out_raw_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_out_multi_raw_get(stmdev_ctx_t *ctx,
+void iis3dwb_fifo_out_multi_raw_get(stmdev_ctx_t *ctx,
                                        iis3dwb_fifo_out_raw_t *fdata,
                                        uint16_t num)
 {
   /* read out all FIFO entries in a single read */
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_DATA_OUT_TAG,
-                         (uint8_t *)fdata,
-                         sizeof(iis3dwb_fifo_out_raw_t) * num);
+  receiveSPIManual(ctx, IIS3DWB_FIFO_DATA_OUT_TAG, fdata, sizeof(iis3dwb_fifo_out_raw_t) * num);
 
-  return ret;
 }
 
 /**
@@ -2812,24 +2788,22 @@ int32_t iis3dwb_fifo_data_level_get(stmdev_ctx_t *ctx, uint16_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
-                                iis3dwb_fifo_status_t *val)
+void iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status_t *val, uint8_t *buff)
 {
-  uint8_t buff[2];
-  iis3dwb_fifo_status2_t status;
-
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_STATUS1, (uint8_t *)&buff[0], 2);
-  bytecpy((uint8_t *)&status, &buff[1]);
-
-  val->fifo_bdr = status.counter_bdr_ia;
-  val->fifo_ovr = status.fifo_ovr_ia | status.fifo_ovr_latched;
-  val->fifo_full = status.fifo_full_ia;
-  val->fifo_th = status.fifo_wtm_ia;
-
+  receiveSPIManual(ctx, IIS3DWB_FIFO_STATUS1, buff, 2);
   val->fifo_level = (uint16_t)buff[1] & 0x03U;
   val->fifo_level = (val->fifo_level * 256U) + buff[0];
 
-  return ret;
+}
+
+void iis3dwb_fifo_status_interpret(iis3dwb_fifo_status2_t *status, iis3dwb_fifo_status_t *val)
+
+{
+	  val->fifo_bdr = status->counter_bdr_ia;
+	  val->fifo_ovr = status->fifo_ovr_ia | status->fifo_ovr_latched;
+	  val->fifo_full = status->fifo_full_ia;
+	  val->fifo_th = status->fifo_wtm_ia;
+
 }
 
 /**
