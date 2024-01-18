@@ -61,12 +61,8 @@ static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, ui
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
 static void platform_delay(uint32_t ms);
 
-void transmitSPIManual(uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
-void receiveSPIManual(uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
-
-int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status_t *val);
-static void tx_com(uint8_t *tx_buffer, uint16_t len);
-static void bytecpy(uint8_t *target, const uint8_t *source);
+//void transmitSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
+//void receiveSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
 
 //void iis3dwb_fifo(void);
 //stmdev_ctx_t dev_ctx;
@@ -87,45 +83,41 @@ int a = 0;
 //static float acceleration_mg[3];
 //static float temperature_degC;
 static uint8_t whoamI;
-iis3dwb_fifo_status2_t status;
-//static uint8_t rst;
 
 //static uint8_t scale_CTRL1 = 0xA8; // Accelerometer full-scale selection +- 4G
 //static uint8_t scale_return_CTRL1 = 0x11;
 
 
-//uint8_t scale_CTRL3 = 0x01; // Accelerometer full-scale selection +- 4G
-//static uint8_t scale_return_CTRL3 = 0x11;
+uint8_t scale_CTRL3 = 0x01; // Accelerometer full-scale selection +- 4G
+static uint8_t scale_return_CTRL3 = 0x11;
+
 
 uint8_t val_return1 = 0x11;
-uint8_t val_return2 = 0x22;
 
-uint8_t transmit_val = 0x11;
-uint8_t receive_val = 0x22;
-
-
+uint8_t Txflag = 0;
+uint8_t Rxflag = 0;
 
 iis3dwb_ctrl1_xl_t ctrl1_xl;
 //static uint8_t keep_return = 0x30;
 
 stmdev_ctx_t dev_ctx;
 iis3dwb_fifo_status_t fifo_status;
-
-static uint8_t tx_buffer[1000];
-
-static iis3dwb_fifo_out_raw_t fifo_data[FIFO_WATERMARK];
-static int16_t *datax;
-static int16_t *datay;
-static int16_t *dataz;
-static int32_t *ts;
+//static uint8_t tx_buffer[1000];
+//static iis3dwb_fifo_out_raw_t fifo_data[FIFO_WATERMARK];
+//static int16_t *datax;
+//static int16_t *datay;
+//static int16_t *dataz;
+//static int32_t *ts;
 
 uint8_t tx_set_cs = 0;
 
 uint8_t tx_buf_rmt[ 2 ] = {0x00, 0x00};
 uint8_t rx_buf_rmt[ 2 ] = {0x0, 0x00};
 iis3dwb_ctrl3_c_t ctrl3_c;
+uint8_t transmit_val = 0x11;
+uint8_t receive_val = 0x22;
 
-//uint8_t buff;
+iis3dwb_ctrl3_c_t ctrl3_c;
 /* USER CODE END 0 */
 
 /**
@@ -134,103 +126,104 @@ iis3dwb_ctrl3_c_t ctrl3_c;
   */
 int main(void)
 {
-	/* USER CODE BEGIN 1 */
-	//	stmdev_ctx_t dev_ctx;
-	/* USER CODE END 1 */
+  /* USER CODE BEGIN 1 */
+//	stmdev_ctx_t dev_ctx;
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_USART2_UART_Init();
-	MX_SPI2_Init();
-	/* USER CODE BEGIN 2 */
-	//  stmdev_ctx_t dev_ctx;
-	dev_ctx.write_reg = platform_write;
-	dev_ctx.read_reg = platform_read;
-	dev_ctx.handle = &SENSOR_BUS;
-	//  dev_ctx.handle = &hspi2;
-	//  stmdev_ctx_t dev_ctx;
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_SPI2_Init();
+  /* USER CODE BEGIN 2 */
+//  stmdev_ctx_t dev_ctx;
+  dev_ctx.write_reg = platform_write;
+  dev_ctx.read_reg = platform_read;
+  dev_ctx.handle = &SENSOR_BUS;
+//  dev_ctx.handle = &hspi2;
+//  stmdev_ctx_t dev_ctx;
 
-	/* Wait sensor boot time */
-	platform_delay(BOOT_TIME);
+  /* Wait sensor boot time */
+  platform_delay(BOOT_TIME);
 
-	/* Check device ID */
+	/* Reset device ID */
+		transmit_val = 0x01;
+		transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &transmit_val, 1);
+
+
+
+	HAL_Delay(200);
+
+//  /* Check device ID */
 	iis3dwb_device_id_get(&dev_ctx, &whoamI);
+
 	while (whoamI != IIS3DWB_ID)
-		{
+	{
 	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
 	  a += 1;
 	  HAL_Delay(50);
 	}
-	/*
-	 *  Accelerometer full-scale selection
-	 *	A = Enables accelerometer
-	 *	8 = Selects accelerometer full-scale [+- 4G]
-	 */
-	transmit_val = 0xA8;
-	transmitSPIManual(IIS3DWB_CTRL1_XL, &transmit_val, 1);
 
-	/* Restore default configuration
-	 * - Software reset at ctrl3_c
-	 */
+	a = 0;
+//	transmit_val = 0x44;
+//	transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &transmit_val, 1);
 
-	transmit_val = 0x01;
-	transmitSPIManual(IIS3DWB_CTRL3_C, &transmit_val, 1);
+//	iis3dwb_reset_set(&dev_ctx, PROPERTY_ENABLE);
+//
+//   ////   /* Enable Block Data Update */
+	iis3dwb_block_data_update_set(&dev_ctx, &ctrl3_c, &scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
+//	transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
 
-	/* Enable Block Data Update
-	 * Set Block data update
-	 */
 
-	transmit_val = 0x44;
-	transmitSPIManual(IIS3DWB_CTRL3_C, &transmit_val, 1);
-
-	 /*
-	  * Set FIFO watermark (number of unread sensor data TAG + 6 bytes
-	  * stored in FIFO) to FIFO_WATERMARK samples
-	  * - iis3dwb_fifo_watermark_set
-	  */
-	transmit_val = (uint8_t)(0x00FFU & FIFO_WATERMARK);
-	transmitSPIManual(IIS3DWB_FIFO_CTRL1, &transmit_val, 1);
-	/////////////////////////////////////////////////////////
-	transmit_val = (uint8_t)((0x0100U & FIFO_WATERMARK) >> 8);
-	transmitSPIManual(IIS3DWB_FIFO_CTRL2, &transmit_val, 1);
-
-	/* Set FIFO batch XL ODR to 12.5Hz
-	 * - iis3dwb_fifo_xl_batch_set
-	 */
-	transmit_val = IIS3DWB_XL_BATCHED_AT_26k7Hz;
-	transmitSPIManual(IIS3DWB_FIFO_CTRL3, &transmit_val, 1);
-
-	/* Set FIFO mode to Stream mode (aka Continuous Mode) & iis3dwb_fifo_timestamp_batch_set
-	 * - iis3dwb_fifo_mode_set
-	 * - iis3dwb_fifo_timestamp_batch_set
-	 */
-	transmit_val = 0x86;
-	transmitSPIManual(IIS3DWB_FIFO_CTRL4, &transmit_val, 1);
-
-	/* Set Output Data Rate
-	 * - iis3dwb_timestamp_set: Enables timestamp counter
-	 */
-	transmit_val = 0x20;
-	transmitSPIManual(IIS3DWB_CTRL10_C, &transmit_val, 1);
-
-//	receiveSPIManual(IIS3DWB_CTRL3_C, &receive_val, 1);
-
+//	while (scale_return_CTRL3 != 0x01)
+//		{
+//		iis3dwb_block_data_update_set(&dev_ctx, PROPERTY_ENABLE); //ctrl3_c.bdu = (uint8_t)val;
+//		  a += 1;
+//		  HAL_Delay(100);
+//
+//		  iis3dwb_block_data_update_get(&dev_ctx, &scale_return_CTRL3);
+//	  }
+//
+//	a = 99;
+//   iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_2g);
+//   iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_CTRL1, 1);
+//   HAL_Delay(10);
+//   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL1_XL, &scale_return_CTRL1, 1);
+//   HAL_Delay(10);
+//
+////   iis3dwb_write_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_CTRL3, 1);
+////   HAL_Delay(10);
+////   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+////   HAL_Delay(10);
+//
+//   iis3dwb_reset_set(&dev_ctx, &ctrl3_c, PROPERTY_ENABLE);
+////////
+//   do {
+//	   iis3dwb_reset_get(&dev_ctx, &ctrl3_c, &rst); //ctrl3_c.sw_reset = (uint8_t)val;
+//   } while (rst);
+//////
+//////   /* Enable Block Data Update */
+//   iis3dwb_block_data_update_set(&dev_ctx, &ctrl3_c, PROPERTY_ENABLE); //ctrl3_c.bdu = (uint8_t)val;
+////   iis3dwb_block_data_update_set(&dev_ctx, scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
+//
+//   iis3dwb_read_reg(&dev_ctx, IIS3DWB_CTRL3_C, &scale_return_CTRL3, 1);
+//   HAL_Delay(10);
+//   HAL_Delay(200);
 
   /* USER CODE END 2 */
 
@@ -238,73 +231,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-//	  uint16_t num = 0, k;
-	  /* Read watermark flag
-	   * - iis3dwb_fifo_out_multi_raw_get
-	   */
-//	  iis3dwb_fifo_status_get(&dev_ctx, &fifo_status);
-//	  uint8_t combine_val = 0x00;
-	  receiveSPIManual(IIS3DWB_CTRL3_C, &receive_val, 1);
-//	  combine_val = receive_val;
-
-//	  receiveSPIManual(IIS3DWB_FIFO_STATUS2, &receive_val, 1);
-//
-//	  receive_val <<= 8;
-//	  receive_val |= ( 0x0F &combine_val);
-//	  uint8_t buff[2];
-////	  iis3dwb_fifo_status2_t status;
-//
-//	  transmitSPIManual(IIS3DWB_FIFO_STATUS1, (uint8_t *)&buff[0], 2);
-//	  bytecpy((uint8_t *)&status, &buff[1]);
-//
-//	  fifo_status.fifo_bdr = status.counter_bdr_ia;
-//	  fifo_status.fifo_ovr = status.fifo_ovr_ia | status.fifo_ovr_latched;
-//	  fifo_status.fifo_full = status.fifo_full_ia;
-//	  fifo_status.fifo_th = status.fifo_wtm_ia;
-//
-//	  fifo_status.fifo_level = (uint16_t)buff[1] & 0x03U;
-//	  fifo_status.fifo_level = (fifo_status.fifo_level * 256U) + buff[0];
-
-
-//	  if (fifo_status.fifo_th == 1) {
-//		  num = fifo_status.fifo_level;
-//
-//		 /* read out all FIFO entries in a single read */
-//		 iis3dwb_fifo_out_multi_raw_get(&dev_ctx, fifo_data, num);
-//
-//		 for (k = 0; k < num; k++) {
-//			 iis3dwb_fifo_out_raw_t *f_data;
-//
-//			 f_data = &fifo_data[k];
-//			 /* Read FIFO sensor value */
-//			 datax = (int16_t *)&f_data->data[0];
-//			 datay = (int16_t *)&f_data->data[1];
-//			 dataz = (int16_t *)&f_data->data[2];
-//			 ts = (int32_t *)&f_data->data[0];
-//
-//			 switch (f_data->tag >> 3) {
-//			 case IIS3DWB_XL_TAG: //2
-//				 sprintf((char *)tx_buffer, "%d: ACC [mg]:\t%4.2f\t%4.2f\t%4.2f\r\n",
-//						 k,
-//						 iis3dwb_from_fs8g_to_mg(*datax),
-//						 iis3dwb_from_fs8g_to_mg(*datay),
-//						 iis3dwb_from_fs8g_to_mg(*dataz));
-//
-//				 tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//				 break;
-//
-//			case IIS3DWB_TIMESTAMP_TAG: //4
-//				 sprintf((char *)tx_buffer, "%d TIMESTAMP [ms] %d\r\n", (uint16_t)k, (uint16_t)*ts);
-//				 tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//				 break;
-//			default:
-//				 break;
-//				}
-//			 }
-//	     sprintf((char *)tx_buffer, "------ \r\n\r\n");
-//	     tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//		 }
+	  receiveSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &val_return1, 1);
+	  HAL_Delay(200);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -504,7 +432,10 @@ static int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, ui
 	  tx_set_cs = 1;
 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, RESET);
-	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, len+1);
+	  HAL_SPI_Transmit_IT(handle, &tx_buf_rmt, 2);
+
+
+	  HAL_SPI_Transmit_IT(handle, (uint8_t*) bufp, len);
 
 	  return 0;
 }
@@ -523,9 +454,13 @@ static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t 
 	  tx_buf_rmt[ 0 ] = reg;
 	  tx_buf_rmt[ 0 ] |= 0x80;
 	  tx_buf_rmt[ 1 ] = 0x00;
+//	  reg |= 0x80;
+
+	  Txflag = 2;
+	  Rxflag = 2;
 
 	  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
-	  HAL_SPI_Transmit_IT(handle, tx_buf_rmt, 2);
+	  HAL_SPI_Transmit_IT(handle, &tx_buf_rmt, 2);
 	  HAL_SPI_Receive_IT(handle, bufp, len);
 
 	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
@@ -548,11 +483,11 @@ static void platform_delay(uint32_t ms)
  * @param  len           number of byte to send
  *
  */
-static void tx_com(uint8_t *tx_buffer, uint16_t len)
-{
-//	HAL_UART_Transmit(&huart2, tx_buffer, sizeof(tx_buffer), len);
-	HAL_UART_Transmit(&huart2, tx_buffer, len, 1000);
-}
+//static void tx_com(uint8_t *tx_buffer, uint16_t len)
+//{
+////	HAL_UART_Transmit(&huart2, tx_buffer, sizeof(tx_buffer), len);
+//	HAL_UART_Transmit(&huart2, tx_buffer, len, 1000);
+//}
 
 ///* Main Example --------------------------------------------------------------*/
 //void iis3dwb_fifo(void)
@@ -753,6 +688,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 				HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
 				tx_set_cs = 0;
 			}
+			Txflag = 1;
 		 }
 }
 
@@ -762,45 +698,20 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 	if(hspi->Instance == hspi2.Instance)
 	 {
 		HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
-//		Rxflag = 1;
+		Rxflag = 1;
 	 }
 }
 
-void transmitSPIManual(uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
+//void transmitSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
+//
+//   iis3dwb_write_reg(ctx, where_is_reg, rev_val, size_);
+//}
+//
+//void receiveSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
+//   iis3dwb_read_reg(ctx, where_is_reg, rev_val, size_);
+//}
 
-   iis3dwb_write_reg(&dev_ctx, where_is_reg, rev_val, size_);
-}
 
-void receiveSPIManual(uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
-   iis3dwb_read_reg(&dev_ctx, where_is_reg, rev_val, size_);
-}
-
-static void bytecpy(uint8_t *target, const uint8_t *source)
-{
-  if ((target != NULL) && (source != NULL))
-  {
-    *target = *source;
-  }
-}
-
-int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status_t *val)
-{
-  uint8_t buff[2];
-  iis3dwb_fifo_status2_t status;
-
-  receiveSPIManual(IIS3DWB_FIFO_STATUS1, (uint8_t *)&buff[0], 2);
-  bytecpy((uint8_t *)&status, &buff[1]);
-
-  val->fifo_bdr = status.counter_bdr_ia;
-  val->fifo_ovr = status.fifo_ovr_ia | status.fifo_ovr_latched;
-  val->fifo_full = status.fifo_full_ia;
-  val->fifo_th = status.fifo_wtm_ia;
-
-  val->fifo_level = (uint16_t)buff[1] & 0x03U;
-  val->fifo_level = (val->fifo_level * 256U) + buff[0];
-
-  return 0;
-}
 /* USER CODE END 4 */
 
 /**

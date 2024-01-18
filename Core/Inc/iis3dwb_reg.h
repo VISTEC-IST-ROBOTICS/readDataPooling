@@ -784,9 +784,12 @@ int32_t iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx,
 int32_t iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx,
                                  iis3dwb_odr_xl_t *val);
 
-int32_t iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val);
+void iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val);
 int32_t iis3dwb_block_data_update_get(stmdev_ctx_t *ctx,
                                       uint8_t *val);
+
+void transmitSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
+void receiveSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_);
 
 typedef enum
 {
@@ -882,8 +885,8 @@ int32_t iis3dwb_data_ready_mode_get(stmdev_ctx_t *ctx,
 
 int32_t iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff);
 
-int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val);
-int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val);
+int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, uint8_t val);
+int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, uint8_t *val);
 
 int32_t iis3dwb_auto_increment_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t iis3dwb_auto_increment_get(stmdev_ctx_t *ctx, uint8_t *val);
@@ -1136,8 +1139,8 @@ typedef struct
   uint8_t fifo_ovr : 1;
   uint8_t fifo_th : 1;
 } iis3dwb_fifo_status_t;
-//int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
-//                                iis3dwb_fifo_status_t *val);
+int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
+                                iis3dwb_fifo_status_t *val);
 
 typedef struct
 {

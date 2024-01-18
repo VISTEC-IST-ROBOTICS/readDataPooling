@@ -296,23 +296,24 @@ int32_t iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx,
 //	return 0;
 //}
 
-int32_t iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val)
+void iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val)
 {
 
-//
-  // int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
-//
-  // if (ret == 0)
-  // {
-    ctrl3_c->bdu = (uint8_t) val;
-    iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
+    ctrl3_c->bdu = (uint8_t) *val;
+    transmitSPIManual(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
 
-  return 0;
 
-	// uint8_t keep_val = 0x44;
-	// iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, &keep_val, 1);
-	// return 0;
 }
+
+void transmitSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
+
+   iis3dwb_write_reg(ctx, where_is_reg, rev_val, size_);
+}
+
+void receiveSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val, uint8_t size_){
+   iis3dwb_read_reg(ctx, where_is_reg, rev_val, size_);
+}
+
 
 /**
   * @brief  Block data update.[get]
@@ -1144,16 +1145,13 @@ int32_t iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val)
+int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, uint8_t val)
 {
- // iis3dwb_ctrl3_c_t ctrl3_c;
+	iis3dwb_ctrl3_c_t *ctrl3_c;
+	ctrl3_c->sw_reset = (uint8_t)val;
+	iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
 
- // iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
-
-   ctrl3_c->sw_reset = val;
-   iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
-
- return 0;
+	return 0;
 }
 
 /**
@@ -1164,11 +1162,11 @@ int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val)
+int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, uint8_t *val)
 {
-//   iis3dwb_ctrl3_c_t ctrl3_c;
+   iis3dwb_ctrl3_c_t *ctrl3_c;
 
- iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
+ iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
  *val = ctrl3_c->sw_reset;
 
  return 0;
@@ -3046,25 +3044,25 @@ int32_t iis3dwb_fifo_data_level_get(stmdev_ctx_t *ctx, uint16_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-//int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
-//                                iis3dwb_fifo_status_t *val)
-//{
-//  uint8_t buff[2];
-//  iis3dwb_fifo_status2_t status;
-//
-//  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_STATUS1, (uint8_t *)&buff[0], 2);
-//  bytecpy((uint8_t *)&status, &buff[1]);
-//
-//  val->fifo_bdr = status.counter_bdr_ia;
-//  val->fifo_ovr = status.fifo_ovr_ia | status.fifo_ovr_latched;
-//  val->fifo_full = status.fifo_full_ia;
-//  val->fifo_th = status.fifo_wtm_ia;
-//
-//  val->fifo_level = (uint16_t)buff[1] & 0x03U;
-//  val->fifo_level = (val->fifo_level * 256U) + buff[0];
-//
-//  return ret;
-//}
+int32_t iis3dwb_fifo_status_get(stmdev_ctx_t *ctx,
+                                iis3dwb_fifo_status_t *val)
+{
+  uint8_t buff[2];
+  iis3dwb_fifo_status2_t status;
+
+  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_STATUS1, (uint8_t *)&buff[0], 2);
+  bytecpy((uint8_t *)&status, &buff[1]);
+
+  val->fifo_bdr = status.counter_bdr_ia;
+  val->fifo_ovr = status.fifo_ovr_ia | status.fifo_ovr_latched;
+  val->fifo_full = status.fifo_full_ia;
+  val->fifo_th = status.fifo_wtm_ia;
+
+  val->fifo_level = (uint16_t)buff[1] & 0x03U;
+  val->fifo_level = (val->fifo_level * 256U) + buff[0];
+
+  return ret;
+}
 
 /**
   * @}
