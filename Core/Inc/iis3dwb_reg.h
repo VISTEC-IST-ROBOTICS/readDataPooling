@@ -769,22 +769,19 @@ typedef enum
   IIS3DWB_4g   = 2,
   IIS3DWB_8g   = 3,
 } iis3dwb_fs_xl_t;
-int32_t iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx,
-                                  iis3dwb_fs_xl_t val);
-int32_t iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx,
-                                  iis3dwb_fs_xl_t *val);
+void iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl);
+void iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl);
 
 typedef enum
 {
   IIS3DWB_XL_ODR_OFF    = 0,
   IIS3DWB_XL_ODR_26k7Hz = 5,
 } iis3dwb_odr_xl_t;
-int32_t iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx,
-                                 iis3dwb_odr_xl_t val);
-int32_t iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx,
-                                 iis3dwb_odr_xl_t *val);
+void iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl);
+void iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t ctrl1_xl, uint8_t *val);
 
 void iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val);
+
 int32_t iis3dwb_block_data_update_get(stmdev_ctx_t *ctx,
                                       uint8_t *val);
 
@@ -885,8 +882,8 @@ int32_t iis3dwb_data_ready_mode_get(stmdev_ctx_t *ctx,
 
 int32_t iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff);
 
-int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, uint8_t val);
-int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, uint8_t *val);
+void iis3dwb_reset_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val);
+void iis3dwb_reset_get(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c);
 
 int32_t iis3dwb_auto_increment_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t iis3dwb_auto_increment_get(stmdev_ctx_t *ctx, uint8_t *val);
@@ -1068,8 +1065,8 @@ int32_t iis3dwb_wkup_dur_get(stmdev_ctx_t *ctx, uint8_t *val);
 int32_t iis3dwb_act_sleep_dur_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t iis3dwb_act_sleep_dur_get(stmdev_ctx_t *ctx, uint8_t *val);
 
-int32_t iis3dwb_fifo_watermark_set(stmdev_ctx_t *ctx, uint16_t val);
-int32_t iis3dwb_fifo_watermark_get(stmdev_ctx_t *ctx, uint16_t *val);
+void iis3dwb_fifo_watermark_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl1_t *fifo_ctrl1, iis3dwb_fifo_ctrl2_t *fifo_ctrl2);
+void iis3dwb_fifo_watermark_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl1_t fifo_ctrl1, iis3dwb_fifo_ctrl2_t fifo_ctrl2, uint16_t *val);
 
 int32_t iis3dwb_fifo_stop_on_wtm_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t iis3dwb_fifo_stop_on_wtm_get(stmdev_ctx_t *ctx, uint8_t *val);
@@ -1079,10 +1076,8 @@ typedef enum
   IIS3DWB_XL_NOT_BATCHED          =  0,
   IIS3DWB_XL_BATCHED_AT_26k7Hz    = 10,
 } iis3dwb_bdr_xl_t;
-int32_t iis3dwb_fifo_xl_batch_set(stmdev_ctx_t *ctx,
-                                  iis3dwb_bdr_xl_t val);
-int32_t iis3dwb_fifo_xl_batch_get(stmdev_ctx_t *ctx,
-                                  iis3dwb_bdr_xl_t *val);
+void iis3dwb_fifo_xl_batch_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl3_t *fifo_ctrl3);
+void iis3dwb_fifo_xl_batch_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl3_t fifo_ctrl3, uint8_t *val);
 
 typedef enum
 {
@@ -1093,10 +1088,8 @@ typedef enum
   IIS3DWB_STREAM_MODE             = 6,
   IIS3DWB_BYPASS_TO_FIFO_MODE     = 7,
 } iis3dwb_fifo_mode_t;
-int32_t iis3dwb_fifo_mode_set(stmdev_ctx_t *ctx,
-                              iis3dwb_fifo_mode_t val);
-int32_t iis3dwb_fifo_mode_get(stmdev_ctx_t *ctx,
-                              iis3dwb_fifo_mode_t *val);
+void iis3dwb_fifo_mode_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t *fifo_ctrl4);
+void iis3dwb_fifo_mode_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t fifo_ctrl4, uint8_t *val);
 
 typedef enum
 {
@@ -1115,10 +1108,8 @@ typedef enum
   IIS3DWB_DEC_8         = 2,
   IIS3DWB_DEC_32        = 3,
 } iis3dwb_fifo_timestamp_batch_t;
-int32_t iis3dwb_fifo_timestamp_batch_set(stmdev_ctx_t *ctx,
-                                              iis3dwb_fifo_timestamp_batch_t val);
-int32_t iis3dwb_fifo_timestamp_batch_get(stmdev_ctx_t *ctx,
-                                              iis3dwb_fifo_timestamp_batch_t *val);
+void iis3dwb_fifo_timestamp_batch_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t *fifo_ctrl4);
+void iis3dwb_fifo_timestamp_batch_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t fifo_ctrl4, uint8_t *val);
 
 int32_t iis3dwb_rst_batch_counter_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t iis3dwb_rst_batch_counter_get(stmdev_ctx_t *ctx,

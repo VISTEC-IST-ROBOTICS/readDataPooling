@@ -154,21 +154,10 @@ float_t iis3dwb_from_lsb_to_nsec(int32_t lsb)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx,
-                                  iis3dwb_fs_xl_t val)
+void iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl)
 {
-  iis3dwb_ctrl1_xl_t ctrl1_xl;
+	transmitSPIManual(ctx, IIS3DWB_CTRL1_XL, ctrl1_xl, 1);
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
-
-  if (ret == 0)
-  {
-    ctrl1_xl.fs_xl = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_CTRL1_XL,
-                            (uint8_t *)&ctrl1_xl, 1);
-  }
-
-  return ret;
 }
 
 /**
@@ -179,37 +168,9 @@ int32_t iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx,
-                                  iis3dwb_fs_xl_t *val)
+void iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl)
 {
-  iis3dwb_ctrl1_xl_t ctrl1_xl;
-
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
-
-  switch (ctrl1_xl.fs_xl)
-  {
-    case IIS3DWB_2g:
-      *val = IIS3DWB_2g;
-      break;
-
-    case IIS3DWB_16g:
-      *val = IIS3DWB_16g;
-      break;
-
-    case IIS3DWB_4g:
-      *val = IIS3DWB_4g;
-      break;
-
-    case IIS3DWB_8g:
-      *val = IIS3DWB_8g;
-      break;
-
-    default:
-      *val = IIS3DWB_2g;
-      break;
-  }
-
-  return ret;
+	receiveSPIManual(ctx, IIS3DWB_CTRL1_XL, ctrl1_xl, 1);
 }
 
 /**
@@ -220,21 +181,11 @@ int32_t iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx,
-                                 iis3dwb_odr_xl_t val)
+void iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl)
 {
-  iis3dwb_ctrl1_xl_t ctrl1_xl;
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
+	transmitSPIManual(ctx, IIS3DWB_CTRL1_XL, ctrl1_xl, 1);
 
-  if (ret == 0)
-  {
-    ctrl1_xl.xl_en = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_CTRL1_XL,
-                            (uint8_t *)&ctrl1_xl, 1);
-  }
-
-  return ret;
 }
 
 /**
@@ -245,29 +196,12 @@ int32_t iis3dwb_xl_data_rate_set(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx,
-                                 iis3dwb_odr_xl_t *val)
+void iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t ctrl1_xl, uint8_t *val)
 {
-  iis3dwb_ctrl1_xl_t ctrl1_xl;
 
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL1_XL, (uint8_t *)&ctrl1_xl, 1);
+	receiveSPIManual(ctx, IIS3DWB_CTRL1_XL, &ctrl1_xl, 1);
+	*val = ctrl1_xl.xl_en;
 
-  switch (ctrl1_xl.xl_en)
-  {
-    case IIS3DWB_XL_ODR_OFF:
-      *val = IIS3DWB_XL_ODR_OFF;
-      break;
-
-    case IIS3DWB_XL_ODR_26k7Hz:
-      *val = IIS3DWB_XL_ODR_26k7Hz;
-      break;
-
-    default:
-      *val = IIS3DWB_XL_ODR_OFF;
-      break;
-  }
-
-  return ret;
 }
 
 /**
@@ -278,28 +212,12 @@ int32_t iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-//int32_t iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, uint8_t *val)
-//{
-//  iis3dwb_ctrl3_c_t ctrl3_c;
-////
-////  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
-////
-////  if (ret == 0)
-////  {
-//    ctrl3_c.bdu = (uint8_t)*val;
-//    iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
-////  }
-////
-////  return ret;
-////	uint8_t keep_val = 0x44;
-////	iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, &keep_val, 1);
-//	return 0;
-//}
 
 void iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val)
 {
 
     ctrl3_c->bdu = (uint8_t) *val;
+    ctrl3_c->if_inc = (uint8_t) *val;
     transmitSPIManual(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
 
 
@@ -1145,13 +1063,10 @@ int32_t iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, uint8_t val)
+void iis3dwb_reset_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t val)
 {
-	iis3dwb_ctrl3_c_t *ctrl3_c;
 	ctrl3_c->sw_reset = (uint8_t)val;
-	iis3dwb_write_reg(ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
-
-	return 0;
+	transmitSPIManual(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
 }
 
 /**
@@ -1162,14 +1077,11 @@ int32_t iis3dwb_reset_set(stmdev_ctx_t *ctx, uint8_t val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_reset_get(stmdev_ctx_t *ctx, uint8_t *val)
+void iis3dwb_reset_get(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c)
 {
-   iis3dwb_ctrl3_c_t *ctrl3_c;
 
- iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
- *val = ctrl3_c->sw_reset;
+	receiveSPIManual(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
 
- return 0;
 }
 
 /**
@@ -2522,29 +2434,11 @@ int32_t iis3dwb_act_sleep_dur_get(stmdev_ctx_t *ctx, uint8_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_watermark_set(stmdev_ctx_t *ctx, uint16_t val)
+void iis3dwb_fifo_watermark_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl1_t *fifo_ctrl1, iis3dwb_fifo_ctrl2_t *fifo_ctrl2)
 {
-  iis3dwb_fifo_ctrl1_t fifo_ctrl1;
-  iis3dwb_fifo_ctrl2_t fifo_ctrl2;
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL2,
-                         (uint8_t *)&fifo_ctrl2, 1);
-
-  if (ret == 0)
-  {
-    fifo_ctrl1.wtm = (uint8_t)(0x00FFU & val);
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_FIFO_CTRL1,
-                            (uint8_t *)&fifo_ctrl1, 1);
-  }
-
-  if (ret == 0)
-  {
-    fifo_ctrl2.wtm = (uint8_t)((0x0100U & val) >> 8);
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_FIFO_CTRL2,
-                            (uint8_t *)&fifo_ctrl2, 1);
-  }
-
-  return ret;
+    transmitSPIManual(ctx, IIS3DWB_FIFO_CTRL1, fifo_ctrl1, 1);
+    transmitSPIManual(ctx, IIS3DWB_FIFO_CTRL2, fifo_ctrl2, 1);
 }
 
 /**
@@ -2555,25 +2449,17 @@ int32_t iis3dwb_fifo_watermark_set(stmdev_ctx_t *ctx, uint16_t val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_watermark_get(stmdev_ctx_t *ctx, uint16_t *val)
+void iis3dwb_fifo_watermark_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl1_t fifo_ctrl1, iis3dwb_fifo_ctrl2_t fifo_ctrl2, uint16_t *val)
 {
-  iis3dwb_fifo_ctrl1_t fifo_ctrl1;
-  iis3dwb_fifo_ctrl2_t fifo_ctrl2;
 
   *val = 0;
  
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL2,
-                         (uint8_t *)&fifo_ctrl2, 1);
-  if (ret != 0) { return ret; }
-
-  ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL1,
-                           (uint8_t *)&fifo_ctrl1, 1);
+  receiveSPIManual(ctx, IIS3DWB_FIFO_CTRL2, &fifo_ctrl2, 1);
+  receiveSPIManual(ctx, IIS3DWB_FIFO_CTRL1, &fifo_ctrl1, 1);
 
   *val = fifo_ctrl2.wtm;
-  *val = *val << 8;
-  *val += fifo_ctrl1.wtm;
-
-  return ret;
+  *val <<= 8;
+  *val |= fifo_ctrl1.wtm;
 }
 
 /**
@@ -2631,22 +2517,10 @@ int32_t iis3dwb_fifo_stop_on_wtm_get(stmdev_ctx_t *ctx, uint8_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_xl_batch_set(stmdev_ctx_t *ctx,
-                                  iis3dwb_bdr_xl_t val)
+void iis3dwb_fifo_xl_batch_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl3_t *fifo_ctrl3)
 {
-  iis3dwb_fifo_ctrl3_t fifo_ctrl3;
+	transmitSPIManual(ctx, IIS3DWB_FIFO_CTRL3, fifo_ctrl3, 1);
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL3,
-                         (uint8_t *)&fifo_ctrl3, 1);
-
-  if (ret == 0)
-  {
-    fifo_ctrl3.bdr_xl = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_FIFO_CTRL3,
-                            (uint8_t *)&fifo_ctrl3, 1);
-  }
-
-  return ret;
 }
 
 /**
@@ -2658,30 +2532,12 @@ int32_t iis3dwb_fifo_xl_batch_set(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_xl_batch_get(stmdev_ctx_t *ctx,
-                                  iis3dwb_bdr_xl_t *val)
+void iis3dwb_fifo_xl_batch_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl3_t fifo_ctrl3, uint8_t *val)
 {
-  iis3dwb_fifo_ctrl3_t fifo_ctrl3;
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL3,
-                         (uint8_t *)&fifo_ctrl3, 1);
+	receiveSPIManual(ctx, IIS3DWB_FIFO_CTRL3, &fifo_ctrl3, 1);
+	*val = fifo_ctrl3.bdr_xl;
 
-  switch (fifo_ctrl3.bdr_xl)
-  {
-    case IIS3DWB_XL_NOT_BATCHED:
-      *val = IIS3DWB_XL_NOT_BATCHED;
-      break;
-
-    case IIS3DWB_XL_BATCHED_AT_26k7Hz:
-      *val = IIS3DWB_XL_BATCHED_AT_26k7Hz;
-      break;
-
-    default:
-      *val = IIS3DWB_XL_NOT_BATCHED;
-      break;
-  }
-
-  return ret;
 }
 
 /**
@@ -2692,22 +2548,9 @@ int32_t iis3dwb_fifo_xl_batch_get(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_mode_set(stmdev_ctx_t *ctx,
-                              iis3dwb_fifo_mode_t val)
+void iis3dwb_fifo_mode_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t *fifo_ctrl4)
 {
-  iis3dwb_fifo_ctrl4_t fifo_ctrl4;
-
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                         (uint8_t *)&fifo_ctrl4, 1);
-
-  if (ret == 0)
-  {
-    fifo_ctrl4.fifo_mode = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                            (uint8_t *)&fifo_ctrl4, 1);
-  }
-
-  return ret;
+    transmitSPIManual(ctx, IIS3DWB_FIFO_CTRL4, fifo_ctrl4, 1);
 }
 
 /**
@@ -2718,46 +2561,10 @@ int32_t iis3dwb_fifo_mode_set(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_mode_get(stmdev_ctx_t *ctx,
-                              iis3dwb_fifo_mode_t *val)
+void iis3dwb_fifo_mode_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t fifo_ctrl4, uint8_t *val)
 {
-  iis3dwb_fifo_ctrl4_t fifo_ctrl4;
-
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                         (uint8_t *)&fifo_ctrl4, 1);
-
-  switch (fifo_ctrl4.fifo_mode)
-  {
-    case IIS3DWB_BYPASS_MODE:
-      *val = IIS3DWB_BYPASS_MODE;
-      break;
-
-    case IIS3DWB_FIFO_MODE:
-      *val = IIS3DWB_FIFO_MODE;
-      break;
-
-    case IIS3DWB_STREAM_TO_FIFO_MODE:
-      *val = IIS3DWB_STREAM_TO_FIFO_MODE;
-      break;
-
-    case IIS3DWB_BYPASS_TO_STREAM_MODE:
-      *val = IIS3DWB_BYPASS_TO_STREAM_MODE;
-      break;
-
-    case IIS3DWB_STREAM_MODE:
-      *val = IIS3DWB_STREAM_MODE;
-      break;
-
-    case IIS3DWB_BYPASS_TO_FIFO_MODE:
-      *val = IIS3DWB_BYPASS_TO_FIFO_MODE;
-      break;
-
-    default:
-      *val = IIS3DWB_BYPASS_MODE;
-      break;
-  }
-
-  return ret;
+  receiveSPIManual(ctx, IIS3DWB_FIFO_CTRL4, &fifo_ctrl4, 1);
+  *val = fifo_ctrl4.fifo_mode;
 }
 
 /**
@@ -2832,22 +2639,10 @@ int32_t iis3dwb_fifo_temp_batch_get(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_timestamp_batch_set(stmdev_ctx_t *ctx,
-                                         iis3dwb_fifo_timestamp_batch_t val)
+void iis3dwb_fifo_timestamp_batch_set(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t *fifo_ctrl4)
 {
-  iis3dwb_fifo_ctrl4_t fifo_ctrl4;
+    transmitSPIManual(ctx, IIS3DWB_FIFO_CTRL4, fifo_ctrl4, 1);
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                         (uint8_t *)&fifo_ctrl4, 1);
-
-  if (ret == 0)
-  {
-    fifo_ctrl4.odr_ts_batch = (uint8_t)val;
-    ret = iis3dwb_write_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                            (uint8_t *)&fifo_ctrl4, 1);
-  }
-
-  return ret;
 }
 
 /**
@@ -2861,38 +2656,11 @@ int32_t iis3dwb_fifo_timestamp_batch_set(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_fifo_timestamp_batch_get(stmdev_ctx_t *ctx,
-                                         iis3dwb_fifo_timestamp_batch_t *val)
+void iis3dwb_fifo_timestamp_batch_get(stmdev_ctx_t *ctx, iis3dwb_fifo_ctrl4_t fifo_ctrl4, uint8_t *val)
 {
-  iis3dwb_fifo_ctrl4_t fifo_ctrl4;
+  receiveSPIManual(ctx, IIS3DWB_FIFO_CTRL4, &fifo_ctrl4, 1);
+  *val = fifo_ctrl4.odr_ts_batch;
 
-  int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_FIFO_CTRL4,
-                         (uint8_t *)&fifo_ctrl4, 1);
-
-  switch (fifo_ctrl4.odr_ts_batch)
-  {
-    case IIS3DWB_NO_DECIMATION:
-      *val = IIS3DWB_NO_DECIMATION;
-      break;
-
-    case IIS3DWB_DEC_1:
-      *val = IIS3DWB_DEC_1;
-      break;
-
-    case IIS3DWB_DEC_8:
-      *val = IIS3DWB_DEC_8;
-      break;
-
-    case IIS3DWB_DEC_32:
-      *val = IIS3DWB_DEC_32;
-      break;
-
-    default:
-      *val = IIS3DWB_NO_DECIMATION;
-      break;
-  }
-
-  return ret;
 }
 
 /**

@@ -117,7 +117,18 @@ iis3dwb_ctrl3_c_t ctrl3_c;
 uint8_t transmit_val = 0x11;
 uint8_t receive_val = 0x22;
 
+uint8_t val_return8 = 0x11;
+uint16_t val_return16 = 0x11;
+
+
+iis3dwb_ctrl1_xl_t ctrl1_xl;
 iis3dwb_ctrl3_c_t ctrl3_c;
+iis3dwb_fifo_ctrl1_t fifo_ctrl1;
+iis3dwb_fifo_ctrl2_t fifo_ctrl2;
+iis3dwb_fifo_ctrl3_t fifo_ctrl3;
+iis3dwb_fifo_ctrl4_t fifo_ctrl4;
+iis3dwb_ctrl1_xl_t ctrl1_xl;
+
 /* USER CODE END 0 */
 
 /**
@@ -162,14 +173,15 @@ int main(void)
   platform_delay(BOOT_TIME);
 
 	/* Reset device ID */
-		transmit_val = 0x01;
-		transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &transmit_val, 1);
+	iis3dwb_reset_set(&dev_ctx, &ctrl3_c, PROPERTY_ENABLE);
+	HAL_Delay(50);
+
+	 do {
+		   iis3dwb_reset_get(&dev_ctx, &ctrl3_c); //ctrl3_c.sw_reset = (uint8_t)val;
+	 } while (ctrl3_c.sw_reset);
 
 
-
-	HAL_Delay(200);
-
-//  /* Check device ID */
+  /* Check device ID */
 	iis3dwb_device_id_get(&dev_ctx, &whoamI);
 
 	while (whoamI != IIS3DWB_ID)
@@ -180,14 +192,38 @@ int main(void)
 	}
 
 	a = 0;
-//	transmit_val = 0x44;
-//	transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &transmit_val, 1);
 
-//	iis3dwb_reset_set(&dev_ctx, PROPERTY_ENABLE);
-//
-//   ////   /* Enable Block Data Update */
-	iis3dwb_block_data_update_set(&dev_ctx, &ctrl3_c, &scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
-//	transmitSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
+
+  /* Enable Block Data Update */
+  iis3dwb_block_data_update_set(&dev_ctx, &ctrl3_c, &scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
+  /* Set full scale */
+  ctrl1_xl.fs_xl = IIS3DWB_8g;
+  iis3dwb_xl_full_scale_set(&dev_ctx, &ctrl1_xl);
+
+  /*
+   * Set FIFO watermark (number of unread sensor data TAG + 6 bytes
+   * stored in FIFO) to FIFO_WATERMARK samples
+   */
+
+  fifo_ctrl1.wtm = (uint8_t)(0x00FFU & FIFO_WATERMARK);
+  fifo_ctrl2.wtm = (uint8_t)((0x0100U & FIFO_WATERMARK) >> 8);
+  iis3dwb_fifo_watermark_set(&dev_ctx, &fifo_ctrl1, &fifo_ctrl2);
+//  iis3dwb_fifo_watermark_get(&dev_ctx, fifo_ctrl1, fifo_ctrl2, &val_return16);
+  /* Set FIFO batch XL ODR to 12.5Hz */
+
+  fifo_ctrl3.bdr_xl = IIS3DWB_XL_BATCHED_AT_26k7Hz;
+  iis3dwb_fifo_xl_batch_set(&dev_ctx, &fifo_ctrl3);
+
+  /* Set FIFO mode to Stream mode (aka Continuous Mode) */
+  fifo_ctrl4.fifo_mode = IIS3DWB_STREAM_MODE;
+  iis3dwb_fifo_mode_set(&dev_ctx, &fifo_ctrl4);
+
+  /* Set Output Data Rate */
+  ctrl1_xl.xl_en = IIS3DWB_XL_ODR_26k7Hz;
+  iis3dwb_xl_data_rate_set(&dev_ctx, &ctrl1_xl);
+  fifo_ctrl4.odr_ts_batch = IIS3DWB_DEC_8;
+  iis3dwb_fifo_timestamp_batch_set(&dev_ctx, &fifo_ctrl4);
+//  iis3dwb_timestamp_set(&dev_ctx, PROPERTY_ENABLE);
 
 
 //	while (scale_return_CTRL3 != 0x01)
@@ -231,8 +267,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  receiveSPIManual(&dev_ctx, IIS3DWB_CTRL3_C, &val_return1, 1);
+//	  iis3dwb_fifo_mode_get(&dev_ctx, fifo_ctrl4, &val_return8);
+//	  iis3dwb_xl_data_rate_get(&dev_ctx, ctrl1_xl, &val_return8);
+	  iis3dwb_fifo_timestamp_batch_get(&dev_ctx, fifo_ctrl4, &val_return8);
 	  HAL_Delay(200);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
