@@ -161,9 +161,10 @@ void iis3dwb_xl_full_scale_set(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-void iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t *ctrl1_xl)
+void iis3dwb_xl_full_scale_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t ctrl1_xl, uint8_t *val)
 {
-	receiveSPIManual(ctx, IIS3DWB_CTRL1_XL, ctrl1_xl, 1);
+	receiveSPIManual(ctx, IIS3DWB_CTRL1_XL, &ctrl1_xl, 1);
+	*val = ctrl1_xl.fs_xl;
 }
 
 /**
@@ -209,8 +210,6 @@ void iis3dwb_xl_data_rate_get(stmdev_ctx_t *ctx, iis3dwb_ctrl1_xl_t ctrl1_xl, ui
 void iis3dwb_block_data_update_set(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t *ctrl3_c, uint8_t *val)
 {
 
-    ctrl3_c->bdu = (uint8_t) *val;
-    ctrl3_c->if_inc = (uint8_t) *val;
     transmitSPIManual(ctx, IIS3DWB_CTRL3_C, ctrl3_c, 1);
 
 
@@ -234,14 +233,12 @@ void receiveSPIManual(stmdev_ctx_t *ctx, uint8_t where_is_reg, uint8_t *rev_val,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_block_data_update_get(stmdev_ctx_t *ctx, uint8_t *val)
+void iis3dwb_block_data_update_get(stmdev_ctx_t *ctx, iis3dwb_ctrl3_c_t ctrl3_c, uint8_t *val)
 {
-  iis3dwb_ctrl3_c_t ctrl3_c;
 
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_CTRL3_C, (uint8_t *)&ctrl3_c, 1);
+  receiveSPIManual(ctx, IIS3DWB_CTRL3_C, &ctrl3_c, 1);
   *val = ctrl3_c.bdu;
 
-  return ret;
 }
 
 /**
@@ -852,7 +849,7 @@ void iis3dwb_fifo_out_multi_raw_get(stmdev_ctx_t *ctx,
                                        uint16_t num)
 {
   /* read out all FIFO entries in a single read */
-  receiveSPIManual(ctx, IIS3DWB_FIFO_DATA_OUT_TAG, fdata, sizeof(iis3dwb_fifo_out_raw_t) * num);
+  receiveSPIManual(ctx, IIS3DWB_FIFO_DATA_OUT_TAG, (uint8_t *)fdata, sizeof(iis3dwb_fifo_out_raw_t) * num);
 
 }
 
@@ -1024,11 +1021,12 @@ int32_t iis3dwb_data_ready_mode_get(stmdev_ctx_t *ctx,
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-int32_t iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff)
+void iis3dwb_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff)
 {
-  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_WHO_AM_I, buff, 1);
+//  const int32_t ret = iis3dwb_read_reg(ctx, IIS3DWB_WHO_AM_I, buff, 1);
+	receiveSPIManual(ctx, IIS3DWB_WHO_AM_I, buff, 1);
 
-  return ret;
+//  return ret;
 }
 
 /**
@@ -2788,11 +2786,12 @@ int32_t iis3dwb_fifo_data_level_get(stmdev_ctx_t *ctx, uint16_t *val)
   * @retval        Interface status (MANDATORY: return 0 -> no Error).
   *
   */
-void iis3dwb_fifo_status_get(stmdev_ctx_t *ctx, iis3dwb_fifo_status_t *val, uint8_t *buff)
+void iis3dwb_fifo_status_get(iis3dwb_fifo_status2_t *status, iis3dwb_fifo_status_t *val)
 {
-  receiveSPIManual(ctx, IIS3DWB_FIFO_STATUS1, buff, 2);
-  val->fifo_level = (uint16_t)buff[1] & 0x03U;
-  val->fifo_level = (val->fifo_level * 256U) + buff[0];
+  val->fifo_bdr = status->counter_bdr_ia;
+  val->fifo_ovr = status->fifo_ovr_ia | status->fifo_ovr_latched;
+  val->fifo_full = status->fifo_full_ia;
+  val->fifo_th = status->fifo_wtm_ia;
 
 }
 
