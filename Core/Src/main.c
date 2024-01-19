@@ -71,8 +71,15 @@ static void tx_com(uint8_t *tx_buffer, uint16_t len);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define BOOT_TIME         10
-#define FIFO_WATERMARK    256
+#define BOOT_TIME         	10
+#define FIFO_WATERMARK    	511
+#define CTRL3_C_REG_SET 	0x44
+//0xA8 Fill scale += 4G
+#define CTRL1_XL_REG_SET	0xA8 //0xa8
+#define FIFO_CTRL3_REG_SET	0xA
+
+#define FIFO_MODE_REG_SET	0x06
+#define FIFO_TIMESTEMP_REG_SET	0x02
 
 int a = 0;
 //volatile uint8_t flag_tx = 0;
@@ -83,7 +90,7 @@ int a = 0;
 //static int16_t data_raw_temperature;
 //static float acceleration_mg[3];
 //static float temperature_degC;
-static uint8_t whoamI;
+static uint8_t whoamI, rst;
 
 //static uint8_t scale_CTRL1 = 0xA8; // Accelerometer full-scale selection +- 4G
 //static uint8_t scale_return_CTRL1 = 0x11;
@@ -119,7 +126,7 @@ uint8_t receive_val = 0x22;
 uint8_t val_return8 = 0x11;
 uint16_t val_return16 = 0x11;
 
-uint8_t buff[2];
+uint8_t buff[10];
 
 iis3dwb_ctrl1_xl_t ctrl1_xl;
 iis3dwb_ctrl3_c_t ctrl3_c;
@@ -135,6 +142,8 @@ uint8_t fifo_th = 0x00;
 uint16_t fifo_level = 0x00;
 
 uint8_t error_tracking = 0x00;
+
+
 /* USER CODE END 0 */
 
 /**
@@ -178,194 +187,155 @@ int main(void)
   /* Wait sensor boot time */
   platform_delay(BOOT_TIME);
 
-	/* Reset device ID */
-	iis3dwb_reset_set(&dev_ctx, &ctrl3_c, PROPERTY_ENABLE);
-	HAL_Delay(50);
+//  /* Restore default configuration */
+//  iis3dwb_reset_set(&dev_ctx, PROPERTY_ENABLE);
+//  HAL_Delay(1000);
+//
+//  do {
+//    iis3dwb_reset_get(&dev_ctx, &rst);
+//    error_tracking += 1;
+//  } while (rst);
 
-	 do {
-		   iis3dwb_reset_get(&dev_ctx, &ctrl3_c); //ctrl3_c.sw_reset = (uint8_t)val;
-	 } while (ctrl3_c.sw_reset);
-
+//  error_tracking = 0 ;
 
   /* Check device ID */
-	 iis3dwb_device_id_get(&dev_ctx, &whoamI);
-	 HAL_Delay(50);
-	 iis3dwb_device_id_get(&dev_ctx, &whoamI);
-	 HAL_Delay(50);
-//	 iis3dwb_device_id_get(&dev_ctx, &whoamI);
-//	 while (whoamI != IIS3DWB_ID)
-//		{
-//		  iis3dwb_device_id_get(&dev_ctx, &whoamI);
-//		  a += 1;
-//		  HAL_Delay(50);
-//		  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
-//		}
+  iis3dwb_device_id_get(&dev_ctx, &whoamI);
 
-	  if(whoamI != IIS3DWB_ID){
-		  error_tracking = 0x01;
-	  }
+  while(whoamI != IIS3DWB_ID){
+	  HAL_Delay(50);
+	  error_tracking = 1;
+  }error_tracking = 0;
 
-	  HAL_Delay(2000);
-//  /* Enable Block Data Update */
-//  ctrl3_c.bdu = 0x01;
-//  ctrl3_c.if_inc = 0x01;
-//  iis3dwb_block_data_update_set(&dev_ctx, &ctrl3_c, &scale_CTRL3); //ctrl3_c.bdu = (uint8_t)val;
-//  iis3dwb_block_data_update_get(&dev_ctx, ctrl3_c, &val_return8);
-//
-//  if(val_return8 != 0x01){
-//	  error_tracking = 0x01;
-//  }
-//  /* Set full scale */
-//  ctrl1_xl.fs_xl = IIS3DWB_8g;
-//  iis3dwb_xl_full_scale_set(&dev_ctx, &ctrl1_xl);
-//  iis3dwb_xl_full_scale_get(&dev_ctx, ctrl1_xl, &val_return8);
-//
-//  if(val_return8 != IIS3DWB_8g){
-//	  error_tracking = 0x01;
-//  }
-//  /*
-//   * Set FIFO watermark (number of unread sensor data TAG + 6 bytes
-//   * stored in FIFO) to FIFO_WATERMARK samples
-//   */
-//
-//  fifo_ctrl1.wtm = (uint8_t)(0x00FFU & FIFO_WATERMARK);
-//  fifo_ctrl2.wtm = (uint8_t)((0x0100U & FIFO_WATERMARK) >> 8);
-//
-//  iis3dwb_fifo_watermark_set(&dev_ctx, &fifo_ctrl1, &fifo_ctrl2);
-//  iis3dwb_fifo_watermark_get(&dev_ctx, fifo_ctrl1, fifo_ctrl2, &val_return16);
-//  if(val_return16 != FIFO_WATERMARK){
-//	  error_tracking = 0x01;
-//  }
-//  /* Set FIFO batch XL ODR to 12.5Hz */
-//  fifo_ctrl3.bdr_xl = IIS3DWB_XL_BATCHED_AT_26k7Hz;
-//  iis3dwb_fifo_xl_batch_set(&dev_ctx, &fifo_ctrl3);
-//  iis3dwb_fifo_xl_batch_get(&dev_ctx, fifo_ctrl3, &val_return8);
-//  if(val_return8 != IIS3DWB_XL_BATCHED_AT_26k7Hz){
-//	  error_tracking = 0x01;
-//  }
-//
-//  /* Set FIFO mode to Stream mode (aka Continuous Mode) */
-//  fifo_ctrl4.fifo_mode = IIS3DWB_STREAM_MODE;
-//  iis3dwb_fifo_mode_set(&dev_ctx, &fifo_ctrl4);
-//  iis3dwb_fifo_mode_get(&dev_ctx, fifo_ctrl4, &val_return8);
-//  if(val_return8 != IIS3DWB_STREAM_MODE){
-//	  error_tracking = 0x01;
-//  }
-//
-//  /* Set Output Data Rate */
-//  ctrl1_xl.xl_en = IIS3DWB_XL_ODR_26k7Hz;
-//  iis3dwb_xl_data_rate_set(&dev_ctx, &ctrl1_xl);
-//  iis3dwb_xl_data_rate_get(&dev_ctx, ctrl1_xl, &val_return8);
-//  if(val_return8 != IIS3DWB_XL_ODR_26k7Hz){
-//	  error_tracking = 0x01;
-//  }
-//
-//  fifo_ctrl4.odr_ts_batch = IIS3DWB_DEC_8;
-//  iis3dwb_fifo_timestamp_batch_set(&dev_ctx, &fifo_ctrl4);
-//  iis3dwb_fifo_timestamp_batch_get(&dev_ctx, fifo_ctrl4, &val_return8);
-//  if(val_return8 != IIS3DWB_DEC_8){
-//	  error_tracking = 0x01;
-//  }
-//
-//  ctrl10_c.timestamp_en = PROPERTY_ENABLE;
-//  iis3dwb_timestamp_set(&dev_ctx, &ctrl10_c);
-//  iis3dwb_timestamp_get(&dev_ctx, ctrl10_c, &val_return8);
-//  if(val_return8 != PROPERTY_ENABLE){
-//	  error_tracking = 0x01;
-//  }
+  HAL_Delay(10);
+  /* Enable Block Data Update */
+  iis3dwb_block_data_update_set(&dev_ctx, CTRL3_C_REG_SET);
+  iis3dwb_block_data_update_get(&dev_ctx, &val_return8);
+
+  while(val_return8 != CTRL3_C_REG_SET){
+	  HAL_Delay(50);
+	  error_tracking = 2;
+  }error_tracking = 0;
+
+   /* Set full scale */
+   iis3dwb_xl_full_scale_set(&dev_ctx, CTRL1_XL_REG_SET);
+   iis3dwb_xl_full_scale_get(&dev_ctx, &val_return8);
+
+   while(val_return8 != CTRL1_XL_REG_SET){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 3;
+   }error_tracking = 0;
+
+   /*
+    * Set FIFO watermark (number of unread sensor data TAG + 6 bytes
+    * stored in FIFO) to FIFO_WATERMARK samples
+    */
+   iis3dwb_fifo_watermark_set(&dev_ctx, FIFO_WATERMARK);
+   iis3dwb_fifo_watermark_get(&dev_ctx, &val_return16);
+
+   while(val_return16 != FIFO_WATERMARK){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 4;
+   }error_tracking = 0;
+
+   HAL_Delay(10);
+   /* Set FIFO batch XL ODR to 12.5Hz */
+   iis3dwb_fifo_xl_batch_set(&dev_ctx, FIFO_CTRL3_REG_SET);
+   iis3dwb_fifo_xl_batch_get(&dev_ctx, &val_return8);
+
+   while(val_return8 != FIFO_CTRL3_REG_SET){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 5;
+   }error_tracking = 0;
+
+   /* Set FIFO mode to Stream mode (aka Continuous Mode) */
+   iis3dwb_fifo_mode_set(&dev_ctx, FIFO_MODE_REG_SET);
+   iis3dwb_fifo_mode_get(&dev_ctx, &val_return8);
+
+   while(val_return8 != FIFO_MODE_REG_SET){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 6;
+   }error_tracking = 0;
+
+   HAL_Delay(10);
+   /* Set Output Data Rate */
+//   iis3dwb_xl_data_rate_set(&dev_ctx, IIS3DWB_XL_ODR_26k7Hz);
+   iis3dwb_fifo_timestamp_batch_set(&dev_ctx, FIFO_TIMESTEMP_REG_SET);
+   iis3dwb_fifo_timestamp_batch_get(&dev_ctx, &val_return8);
+
+   while(val_return8 != 0x80){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 7;
+   }error_tracking = 0;
+
+   iis3dwb_timestamp_set(&dev_ctx, PROPERTY_ENABLE);
+   iis3dwb_timestamp_get(&dev_ctx, &val_return8);
+
+   while(val_return8 != 0x20){
+ 	  HAL_Delay(50);
+ 	 error_tracking = 8;
+   }error_tracking = 0;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-//	  iis3dwb_device_id_get(&dev_ctx, &whoamI);
-//	  iis3dwb_fifo_watermark_get(&dev_ctx, fifo_ctrl1, fifo_ctrl2, &val_return16);
-//	  HAL_Delay(200);
-//	  iis3dwb_fifo_mode_get(&dev_ctx, fifo_ctrl4, &val_return8);
-//	  iis3dwb_xl_data_rate_get(&dev_ctx, ctrl1_xl, &val_return8);
-//	  iis3dwb_fifo_timestamp_batch_get(&dev_ctx, fifo_ctrl4, &val_return8);
-//	  iis3dwb_timestamp_get(&dev_ctx, ctrl10_c, &val_return8);
+   /* Wait samples */
+   while (1) {
+     uint16_t num = 0, k;
+     /* Read watermark flag */
+     iis3dwb_fifo_status_get(&dev_ctx, buff, &val_return16);
 
-//	  uint16_t num, k = 0;
-////	  uint8_t fifo_th = 0x00;
-////	  uint16_t fifo_level = 0x00;
+//     HAL_Delay(100);
+     a += 1;
+//     if (fifo_status.fifo_th == 1) {
+//       num = fifo_status.fifo_level;
+//       sprintf((char *)tx_buffer, "-- FIFO num %d \r\n", num);
+//       tx_com(tx_buffer, strlen((char const *)tx_buffer));
 //
+//       /* read out all FIFO entries in a single read */
+//       iis3dwb_fifo_out_multi_raw_get(&dev_ctx, fifo_data, num);
 //
-////	  uint8_t buff[2];
-//	  /* Read watermark flag */
-//	  receiveSPIManual(&dev_ctx, IIS3DWB_FIFO_STATUS1, buff, 1);
-////
-//	  fifo_th = (buff[0] & 0x80) >> 7;
-//	  fifo_level = (uint16_t)buff[0] & 0x03U;
-//	  fifo_level = (fifo_level * 256U) + buff[1];
+//       for (k = 0; k < num; k++) {
+//         iis3dwb_fifo_out_raw_t *f_data;
 //
-////	  bytecpy((uint8_t *)&status, buff);
-////
-////	  fifo_status.fifo_bdr = (uint8_t)status.counter_bdr_ia;
-////	  fifo_status.fifo_ovr = (uint8_t)(status.fifo_ovr_ia | status.fifo_ovr_latched);
-////	  fifo_status.fifo_full = (uint8_t)status.fifo_full_ia;
-////	  fifo_status.fifo_th = (uint8_t)status.fifo_wtm_ia;//status.fifo_wtm_ia;
-	  a += 1;
-////	  fifo_status.fifo_level = (uint16_t)buff[1] & 0x03U;
-////	  fifo_status.fifo_level = (fifo_status.fifo_level * 256U) + buff[0];
+//         /* print out first two and last two FIFO entries only */
+//         if (k > 1 && k < num - 2)
+//           continue;
 //
-////	  iis3dwb_fifo_status_get(status, &fifo_status);
+//         f_data = &fifo_data[k];
 //
-//	  if (fifo_status.fifo_th == 1) {
-//		  num = fifo_level;
-//		  sprintf((char *)tx_buffer, "-- FIFO num %d \r\n", num);
-//		  tx_com(tx_buffer, strlen((char const *)tx_buffer));
+//         /* Read FIFO sensor value */
+//         datax = (int16_t *)&f_data->data[0];
+//         datay = (int16_t *)&f_data->data[2];
+//         dataz = (int16_t *)&f_data->data[4];
+//         ts = (int32_t *)&f_data->data[0];
 //
-//		  /* read out all FIFO entries in a single read */
-////		  iis3dwb_fifo_out_multi_raw_get(&dev_ctx, fifo_data, num);
-//		  receiveSPIManual(&dev_ctx, IIS3DWB_FIFO_DATA_OUT_TAG, fifo_data, 10);
+//         switch (f_data->tag >> 3) {
+//         case IIS3DWB_XL_TAG:
+//           sprintf((char *)tx_buffer, "%d: ACC [mg]:\t%4.2f\t%4.2f\t%4.2f\r\n",
+//                   k,
+//                   iis3dwb_from_fs8g_to_mg(*datax),
+//                   iis3dwb_from_fs8g_to_mg(*datay),
+//                   iis3dwb_from_fs8g_to_mg(*dataz));
+//           tx_com(tx_buffer, strlen((char const *)tx_buffer));
+//           break;
+//         case IIS3DWB_TIMESTAMP_TAG:
+//           sprintf((char *)tx_buffer, "%d TIMESTAMP [ms] %d\r\n", k, *ts);
+//           tx_com(tx_buffer, strlen((char const *)tx_buffer));
+//           break;
+//         default:
+//           break;
+//         }
+//       }
 //
-//	      for (k = 0; k < num; k++) {
-//	        iis3dwb_fifo_out_raw_t *f_data;
-//
-//	        /* print out first two and last two FIFO entries only */
-//	        if (k > 1 && k < num - 2)
-//	          continue;
-//
-//	        f_data = &fifo_data[k];
-//
-//	        /* Read FIFO sensor value */
-//	        datax = (int16_t *)&f_data->data[0];
-//	        datay = (int16_t *)&f_data->data[2];
-//	        dataz = (int16_t *)&f_data->data[4];
-//	        ts = (int32_t *)&f_data->data[0];
-//
-//	        switch (f_data->tag >> 3) {
-//	        case IIS3DWB_XL_TAG:
-//	          sprintf((char *)tx_buffer, "%d: ACC [mg]:\t%4.2f\t%4.2f\t%4.2f\r\n",
-//	                  k,
-//	                  iis3dwb_from_fs8g_to_mg(*datax),
-//	                  iis3dwb_from_fs8g_to_mg(*datay),
-//	                  iis3dwb_from_fs8g_to_mg(*dataz));
-//	          tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//	          break;
-//	        case IIS3DWB_TIMESTAMP_TAG:
-//	          sprintf((char *)tx_buffer, "%d TIMESTAMP [ms] %d\r\n", k, (uint16_t)*ts);
-//	          tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//	          break;
-//	        default:
-//	          break;
-//	        }
-//	      }
-//
-//	      sprintf((char *)tx_buffer, "------ \r\n\r\n");
-//	      tx_com(tx_buffer, strlen((char const *)tx_buffer));
-//
-//	  }
-//
-//	  k = 0;
-
+//       sprintf((char *)tx_buffer, "------ \r\n\r\n");
+//       tx_com(tx_buffer, strlen((char const *)tx_buffer));
+//     }
+   }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
   /* USER CODE END 3 */
 }
 
